@@ -32,6 +32,7 @@ func SetupRouter(
 	settingService *service.SettingService,
 	cfg *config.Config,
 	redisClient *redis.Client,
+	auditLogSink *service.AuditLogSink,
 ) *gin.Engine {
 	// 缓存 iframe 页面的 origin 列表，用于动态注入 CSP frame-src
 	var cachedFrameOrigins atomic.Pointer[[]string]
@@ -81,7 +82,7 @@ func SetupRouter(
 	}
 
 	// 注册路由
-	registerRoutes(r, handlers, jwtAuth, adminAuth, apiKeyAuth, apiKeyService, subscriptionService, opsService, settingService, cfg, redisClient)
+	registerRoutes(r, handlers, jwtAuth, adminAuth, apiKeyAuth, apiKeyService, subscriptionService, opsService, settingService, cfg, redisClient, auditLogSink)
 
 	return r
 }
@@ -99,6 +100,7 @@ func registerRoutes(
 	settingService *service.SettingService,
 	cfg *config.Config,
 	redisClient *redis.Client,
+	auditLogSink *service.AuditLogSink,
 ) {
 	// 通用路由（健康检查、状态等）
 	routes.RegisterCommonRoutes(r)
@@ -110,6 +112,24 @@ func registerRoutes(
 	routes.RegisterAuthRoutes(v1, h, jwtAuth, redisClient, settingService)
 	routes.RegisterUserRoutes(v1, h, jwtAuth, settingService)
 	routes.RegisterAdminRoutes(v1, h, adminAuth)
-	routes.RegisterGatewayRoutes(r, h, apiKeyAuth, apiKeyService, subscriptionService, opsService, settingService, cfg)
+	routes.RegisterGatewayRoutes(r, h, apiKeyAuth, apiKeyService, subscriptionService, opsService, settingService, cfg, auditLogSink)
 	routes.RegisterPaymentRoutes(v1, h.Payment, h.PaymentWebhook, h.Admin.Payment, jwtAuth, adminAuth, settingService)
+
+	// 审计日志健康监控端点
+	if auditLogSink != nil {
+		admin := v1.Group("/admin")
+		admin.Use(gin.HandlerFunc(adminAuth))
+		admin.GET("/ops/audit-log/health", func(c *gin.Context) {
+			sinkHealth := auditLogSink.Health()
+			middlewareMetrics := middleware2.GetAuditLogMetrics()
+			c.JSON(200, gin.H{
+				"sink": sinkHealth,
+				"capture": gin.H{
+					"total_requests":  middlewareMetrics.TotalRequests,
+					"truncated_count": middlewareMetrics.TruncatedCount,
+					"truncated_bytes": middlewareMetrics.TruncatedBytes,
+				},
+			})
+		})
+	}
 }

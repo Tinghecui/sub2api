@@ -83,6 +83,25 @@ type Config struct {
 	Gemini                  GeminiConfig                  `mapstructure:"gemini"`
 	Update                  UpdateConfig                  `mapstructure:"update"`
 	Idempotency             IdempotencyConfig             `mapstructure:"idempotency"`
+	AuditLog                AuditLogConfig                `mapstructure:"audit_log"`
+}
+
+// AuditLogConfig 审计日志配置（完整请求/响应保存到对象存储）
+type AuditLogConfig struct {
+	Enabled                bool             `mapstructure:"enabled"`
+	S3                     AuditLogS3Config `mapstructure:"s3"`
+	MaxResponseCaptureMB   int              `mapstructure:"max_response_capture_mb"` // 单个响应最大捕获大小（MB），默认 16，超出截断
+}
+
+// AuditLogS3Config S3 兼容存储配置（支持 Cloudflare R2）
+type AuditLogS3Config struct {
+	Endpoint       string `mapstructure:"endpoint"`         // e.g. https://<account_id>.r2.cloudflarestorage.com
+	Region         string `mapstructure:"region"`            // R2 用 "auto"
+	Bucket         string `mapstructure:"bucket"`
+	AccessKeyID    string `mapstructure:"access_key_id"`
+	SecretAccessKey string `mapstructure:"secret_access_key"` //nolint:revive // field name follows AWS convention
+	Prefix         string `mapstructure:"prefix"`            // S3 key 前缀，如 "audit-logs/"
+	ForcePathStyle bool   `mapstructure:"force_path_style"`
 }
 
 type LogConfig struct {

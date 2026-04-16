@@ -467,7 +467,18 @@ var ProviderSet = wire.NewSet(
 	NewPaymentService,
 	ProvidePaymentOrderExpiryService,
 	ProvideBalanceNotifyService,
+	ProvideAuditLogSink,
 )
+
+// ProvideAuditLogSink creates and starts AuditLogSink if audit logging is enabled.
+func ProvideAuditLogSink(cfg *config.Config, store AuditLogStore) *AuditLogSink {
+	if !cfg.AuditLog.Enabled || store == nil {
+		return nil
+	}
+	sink := NewAuditLogSink(store, cfg.AuditLog.S3.Prefix)
+	sink.Start()
+	return sink
+}
 
 // ProvidePaymentConfigService wraps NewPaymentConfigService to accept the named
 // payment.EncryptionKey type instead of raw []byte, avoiding Wire ambiguity.
