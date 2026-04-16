@@ -4956,9 +4956,15 @@ func (s *GatewayService) handleStreamingResponseAnthropicAPIKeyPassthrough(
 					firstTokenMs = &ms
 				}
 				// Cache creation token 虚增（passthrough streaming）
-				// 先 inflate 再解析 usage，确保计费也用膨胀后的值
+				// 先记录原始值，再 inflate，最后解析 usage（确保计费用膨胀后的值）
 				if group := getGroupFromGinContext(c); group != nil && (group.CacheCreationInflatePercent != 0 || group.CacheCreationInflateFixed != 0) {
 					if gjson.Get(data, "usage.cache_creation_input_tokens").Exists() || gjson.Get(data, "message.usage.cache_creation_input_tokens").Exists() {
+						// 记录原始值（inflate 前）
+						origCC := int(gjson.Get(data, "usage.cache_creation_input_tokens").Int())
+						if origCC == 0 {
+							origCC = int(gjson.Get(data, "message.usage.cache_creation_input_tokens").Int())
+						}
+
 						var event map[string]any
 						if json.Unmarshal([]byte(data), &event) == nil {
 							modified := false
@@ -4974,6 +4980,9 @@ func (s *GatewayService) handleStreamingResponseAnthropicAPIKeyPassthrough(
 								if newData, err := json.Marshal(event); err == nil {
 									data = string(newData)
 									line = "data: " + data
+								}
+								if origCC > 0 {
+									usage.OriginalCacheCreationInputTokens = origCC
 								}
 							}
 						}
@@ -6862,12 +6871,20 @@ func (s *GatewayService) handleStreamingResponse(ctx context.Context, resp *http
 			if eventType == "message_start" {
 				if msg, ok := event["message"].(map[string]any); ok {
 					if u, ok := msg["usage"].(map[string]any); ok {
+						// 记录原始值（inflate 前）
+						if origV, origOK := parseSSEUsageInt(u["cache_creation_input_tokens"]); origOK && origV > 0 {
+							usage.OriginalCacheCreationInputTokens = origV
+						}
 						eventChanged = inflateCacheCreationJSON(u, group) || eventChanged
 					}
 				}
 			}
 			if eventType == "message_delta" {
 				if u, ok := event["usage"].(map[string]any); ok {
+					// 记录原始值（inflate 前）
+					if origV, origOK := parseSSEUsageInt(u["cache_creation_input_tokens"]); origOK && origV > 0 {
+						usage.OriginalCacheCreationInputTokens = origV
+					}
 					eventChanged = inflateCacheCreationJSON(u, group) || eventChanged
 				}
 			}
@@ -7258,10 +7275,24 @@ func inflateCacheCreationJSON(usageObj map[string]any, group *Group) bool {
 	if group == nil || (group.CacheCreationInflatePercent == 0 && group.CacheCreationInflateFixed == 0) {
 		return false
 	}
+
+	// 尝试读取聚合字段；如果不存在则从 TTL 分桶合成
 	v, ok := parseSSEUsageInt(usageObj["cache_creation_input_tokens"])
+	if !ok {
+		// 只有 TTL 分桶没有聚合字段的情况
+		if cc, ccOK := usageObj["cache_creation"].(map[string]any); ccOK {
+			v5m, _ := parseSSEUsageInt(cc["ephemeral_5m_input_tokens"])
+			v1h, _ := parseSSEUsageInt(cc["ephemeral_1h_input_tokens"])
+			if v5m > 0 || v1h > 0 {
+				v = v5m + v1h
+				ok = true
+			}
+		}
+	}
 	if !ok || (v == 0 && group.CacheCreationInflateFixed == 0) {
 		return false
 	}
+
 	inflated := group.InflateCacheCreationTokens(v)
 	if inflated == v {
 		return false
