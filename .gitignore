@@ -115,7 +115,6 @@ backend/.installed
 # 其他
 # ===================
 tests
-CLAUDE.md
 .claude
 scripts
 .code-review-state
