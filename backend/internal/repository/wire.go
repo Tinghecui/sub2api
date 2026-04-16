@@ -1,8 +1,10 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"log"
 
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/Wei-Shaw/sub2api/ent"
@@ -122,6 +124,9 @@ var ProviderSet = wire.NewSet(
 	NewPgDumper,
 	NewS3BackupStoreFactory,
 
+	// Audit log infrastructure
+	ProvideAuditLogStore,
+
 	// HTTP service ports (DI Strategy A: return interface directly)
 	NewTurnstileVerifier,
 	ProvidePricingRemoteClient,
@@ -139,6 +144,20 @@ var ProviderSet = wire.NewSet(
 	ProvideSQLDB,
 	ProvideRedis,
 )
+
+// ProvideAuditLogStore creates an AuditLogStore backed by S3/R2 if audit logging is enabled.
+func ProvideAuditLogStore(cfg *config.Config) service.AuditLogStore {
+	if !cfg.AuditLog.Enabled || cfg.AuditLog.S3.Bucket == "" {
+		return nil
+	}
+	store, err := NewS3AuditLogStore(context.Background(), cfg.AuditLog.S3)
+	if err != nil {
+		log.Printf("[AuditLog] Warning: failed to initialize S3 audit log store: %v", err)
+		return nil
+	}
+	log.Printf("[AuditLog] S3 audit log store initialized (bucket: %s, prefix: %s)", cfg.AuditLog.S3.Bucket, cfg.AuditLog.S3.Prefix)
+	return store
+}
 
 // ProvideEnt 为依赖注入提供 Ent 客户端。
 //
