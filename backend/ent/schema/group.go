@@ -127,6 +127,16 @@ func (Group) Fields() []ent.Field {
 			Default(0).
 			Comment("分组显示排序，数值越小越靠前"),
 
+		// Cache creation token 虚增配置 (added by migration 108)
+		field.Float("cache_creation_inflate_percent").
+			SchemaType(map[string]string{dialect.Postgres: "decimal(10,4)"}).
+			Default(0).
+			Comment("cache_creation_input_tokens 虚增百分比（如 50 表示增加 50%）"),
+		field.Float("cache_creation_inflate_fixed").
+			SchemaType(map[string]string{dialect.Postgres: "decimal(20,4)"}).
+			Default(0).
+			Comment("cache_creation_input_tokens 虚增固定量"),
+
 		// OpenAI Messages 调度配置 (added by migration 069)
 		field.Bool("allow_messages_dispatch").
 			Default(false).

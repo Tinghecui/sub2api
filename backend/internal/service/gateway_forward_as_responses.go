@@ -314,6 +314,11 @@ func (s *GatewayService) handleResponsesBufferedStreamingResponse(
 		return nil, fmt.Errorf("upstream stream ended without response")
 	}
 
+	// Cache creation token 虚增
+	if group := getGroupFromGinContext(c); group != nil {
+		usage.CacheCreationInputTokens = group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
+	}
+
 	// Update usage from accumulated delta
 	if usage.InputTokens > 0 || usage.OutputTokens > 0 {
 		finalResp.Usage = apicompat.AnthropicUsage{
@@ -433,6 +438,10 @@ func (s *GatewayService) handleResponsesStreamingResponse(
 	}
 
 	finalizeStream := func() (*ForwardResult, error) {
+		// Cache creation token 虚增
+		if group := getGroupFromGinContext(c); group != nil {
+			usage.CacheCreationInputTokens = group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
+		}
 		if finalEvents := apicompat.FinalizeAnthropicResponsesStream(state); len(finalEvents) > 0 {
 			for _, evt := range finalEvents {
 				sse, err := apicompat.ResponsesEventToSSE(evt)

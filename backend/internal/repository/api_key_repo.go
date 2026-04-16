@@ -707,6 +707,8 @@ func groupEntityToService(g *dbent.Group) *service.Group {
 		RequirePrivacySet:               g.RequirePrivacySet,
 		DefaultMappedModel:              g.DefaultMappedModel,
 		MessagesDispatchModelConfig:     g.MessagesDispatchModelConfig,
+		CacheCreationInflatePercent:     g.CacheCreationInflatePercent,
+		CacheCreationInflateFixed:       g.CacheCreationInflateFixed,
 		CreatedAt:                       g.CreatedAt,
 		UpdatedAt:                       g.UpdatedAt,
 	}

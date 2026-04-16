@@ -66,6 +66,10 @@ const (
 	FieldSupportedModelScopes = "supported_model_scopes"
 	// FieldSortOrder holds the string denoting the sort_order field in the database.
 	FieldSortOrder = "sort_order"
+	// FieldCacheCreationInflatePercent holds the string denoting the cache_creation_inflate_percent field in the database.
+	FieldCacheCreationInflatePercent = "cache_creation_inflate_percent"
+	// FieldCacheCreationInflateFixed holds the string denoting the cache_creation_inflate_fixed field in the database.
+	FieldCacheCreationInflateFixed = "cache_creation_inflate_fixed"
 	// FieldAllowMessagesDispatch holds the string denoting the allow_messages_dispatch field in the database.
 	FieldAllowMessagesDispatch = "allow_messages_dispatch"
 	// FieldRequireOauthOnly holds the string denoting the require_oauth_only field in the database.
@@ -176,6 +180,8 @@ var Columns = []string{
 	FieldMcpXMLInject,
 	FieldSupportedModelScopes,
 	FieldSortOrder,
+	FieldCacheCreationInflatePercent,
+	FieldCacheCreationInflateFixed,
 	FieldAllowMessagesDispatch,
 	FieldRequireOauthOnly,
 	FieldRequirePrivacySet,
@@ -246,6 +252,10 @@ var (
 	DefaultSupportedModelScopes []string
 	// DefaultSortOrder holds the default value on creation for the "sort_order" field.
 	DefaultSortOrder int
+	// DefaultCacheCreationInflatePercent holds the default value on creation for the "cache_creation_inflate_percent" field.
+	DefaultCacheCreationInflatePercent float64
+	// DefaultCacheCreationInflateFixed holds the default value on creation for the "cache_creation_inflate_fixed" field.
+	DefaultCacheCreationInflateFixed float64
 	// DefaultAllowMessagesDispatch holds the default value on creation for the "allow_messages_dispatch" field.
 	DefaultAllowMessagesDispatch bool
 	// DefaultRequireOauthOnly holds the default value on creation for the "require_oauth_only" field.
@@ -381,6 +391,16 @@ func ByMcpXMLInject(opts ...sql.OrderTermOption) OrderOption {
 // BySortOrder orders the results by the sort_order field.
 func BySortOrder(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSortOrder, opts...).ToFunc()
+}
+
+// ByCacheCreationInflatePercent orders the results by the cache_creation_inflate_percent field.
+func ByCacheCreationInflatePercent(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCacheCreationInflatePercent, opts...).ToFunc()
+}
+
+// ByCacheCreationInflateFixed orders the results by the cache_creation_inflate_fixed field.
+func ByCacheCreationInflateFixed(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCacheCreationInflateFixed, opts...).ToFunc()
 }
 
 // ByAllowMessagesDispatch orders the results by the allow_messages_dispatch field.

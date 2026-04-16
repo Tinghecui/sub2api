@@ -76,6 +76,10 @@ type APIKeyAuthGroupSnapshot struct {
 	AllowMessagesDispatch       bool                              `json:"allow_messages_dispatch"`
 	DefaultMappedModel          string                            `json:"default_mapped_model,omitempty"`
 	MessagesDispatchModelConfig OpenAIMessagesDispatchModelConfig `json:"messages_dispatch_model_config,omitempty"`
+
+	// Cache creation token 虚增配置
+	CacheCreationInflatePercent float64 `json:"cache_creation_inflate_percent,omitempty"`
+	CacheCreationInflateFixed   float64 `json:"cache_creation_inflate_fixed,omitempty"`
 }
 
 // APIKeyAuthCacheEntry 缓存条目，支持负缓存

@@ -14,7 +14,7 @@ import (
 	"github.com/dgraph-io/ristretto"
 )
 
-const apiKeyAuthSnapshotVersion = 5 // v5: added TotalRecharged for percentage threshold
+const apiKeyAuthSnapshotVersion = 6 // v6: added CacheCreationInflatePercent/Fixed
 
 type apiKeyAuthCacheConfig struct {
 	l1Size        int
@@ -258,6 +258,8 @@ func (s *APIKeyService) snapshotFromAPIKey(apiKey *APIKey) *APIKeyAuthSnapshot {
 			AllowMessagesDispatch:           apiKey.Group.AllowMessagesDispatch,
 			DefaultMappedModel:              apiKey.Group.DefaultMappedModel,
 			MessagesDispatchModelConfig:     apiKey.Group.MessagesDispatchModelConfig,
+			CacheCreationInflatePercent:     apiKey.Group.CacheCreationInflatePercent,
+			CacheCreationInflateFixed:       apiKey.Group.CacheCreationInflateFixed,
 		}
 	}
 	return snapshot
@@ -321,6 +323,8 @@ func (s *APIKeyService) snapshotToAPIKey(key string, snapshot *APIKeyAuthSnapsho
 			AllowMessagesDispatch:           snapshot.Group.AllowMessagesDispatch,
 			DefaultMappedModel:              snapshot.Group.DefaultMappedModel,
 			MessagesDispatchModelConfig:     snapshot.Group.MessagesDispatchModelConfig,
+			CacheCreationInflatePercent:     snapshot.Group.CacheCreationInflatePercent,
+			CacheCreationInflateFixed:       snapshot.Group.CacheCreationInflateFixed,
 		}
 	}
 	s.compileAPIKeyIPRules(apiKey)

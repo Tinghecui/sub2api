@@ -142,6 +142,9 @@ func (h *GatewayHandler) GeminiV1BetaModels(c *gin.Context) {
 		googleError(c, http.StatusInternalServerError, "User context not found")
 		return
 	}
+	if apiKey.Group != nil {
+		c.Set(service.GroupContextKey, apiKey.Group)
+	}
 	reqLog := requestLogger(
 		c,
 		"handler.gemini_v1beta.models",

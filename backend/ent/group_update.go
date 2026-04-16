@@ -497,6 +497,48 @@ func (_u *GroupUpdate) AddSortOrder(v int) *GroupUpdate {
 	return _u
 }
 
+// SetCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field.
+func (_u *GroupUpdate) SetCacheCreationInflatePercent(v float64) *GroupUpdate {
+	_u.mutation.ResetCacheCreationInflatePercent()
+	_u.mutation.SetCacheCreationInflatePercent(v)
+	return _u
+}
+
+// SetNillableCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillableCacheCreationInflatePercent(v *float64) *GroupUpdate {
+	if v != nil {
+		_u.SetCacheCreationInflatePercent(*v)
+	}
+	return _u
+}
+
+// AddCacheCreationInflatePercent adds value to the "cache_creation_inflate_percent" field.
+func (_u *GroupUpdate) AddCacheCreationInflatePercent(v float64) *GroupUpdate {
+	_u.mutation.AddCacheCreationInflatePercent(v)
+	return _u
+}
+
+// SetCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field.
+func (_u *GroupUpdate) SetCacheCreationInflateFixed(v float64) *GroupUpdate {
+	_u.mutation.ResetCacheCreationInflateFixed()
+	_u.mutation.SetCacheCreationInflateFixed(v)
+	return _u
+}
+
+// SetNillableCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillableCacheCreationInflateFixed(v *float64) *GroupUpdate {
+	if v != nil {
+		_u.SetCacheCreationInflateFixed(*v)
+	}
+	return _u
+}
+
+// AddCacheCreationInflateFixed adds value to the "cache_creation_inflate_fixed" field.
+func (_u *GroupUpdate) AddCacheCreationInflateFixed(v float64) *GroupUpdate {
+	_u.mutation.AddCacheCreationInflateFixed(v)
+	return _u
+}
+
 // SetAllowMessagesDispatch sets the "allow_messages_dispatch" field.
 func (_u *GroupUpdate) SetAllowMessagesDispatch(v bool) *GroupUpdate {
 	_u.mutation.SetAllowMessagesDispatch(v)
@@ -1014,6 +1056,18 @@ func (_u *GroupUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedSortOrder(); ok {
 		_spec.AddField(group.FieldSortOrder, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.CacheCreationInflatePercent(); ok {
+		_spec.SetField(group.FieldCacheCreationInflatePercent, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedCacheCreationInflatePercent(); ok {
+		_spec.AddField(group.FieldCacheCreationInflatePercent, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.CacheCreationInflateFixed(); ok {
+		_spec.SetField(group.FieldCacheCreationInflateFixed, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedCacheCreationInflateFixed(); ok {
+		_spec.AddField(group.FieldCacheCreationInflateFixed, field.TypeFloat64, value)
 	}
 	if value, ok := _u.mutation.AllowMessagesDispatch(); ok {
 		_spec.SetField(group.FieldAllowMessagesDispatch, field.TypeBool, value)
@@ -1805,6 +1859,48 @@ func (_u *GroupUpdateOne) AddSortOrder(v int) *GroupUpdateOne {
 	return _u
 }
 
+// SetCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field.
+func (_u *GroupUpdateOne) SetCacheCreationInflatePercent(v float64) *GroupUpdateOne {
+	_u.mutation.ResetCacheCreationInflatePercent()
+	_u.mutation.SetCacheCreationInflatePercent(v)
+	return _u
+}
+
+// SetNillableCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillableCacheCreationInflatePercent(v *float64) *GroupUpdateOne {
+	if v != nil {
+		_u.SetCacheCreationInflatePercent(*v)
+	}
+	return _u
+}
+
+// AddCacheCreationInflatePercent adds value to the "cache_creation_inflate_percent" field.
+func (_u *GroupUpdateOne) AddCacheCreationInflatePercent(v float64) *GroupUpdateOne {
+	_u.mutation.AddCacheCreationInflatePercent(v)
+	return _u
+}
+
+// SetCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field.
+func (_u *GroupUpdateOne) SetCacheCreationInflateFixed(v float64) *GroupUpdateOne {
+	_u.mutation.ResetCacheCreationInflateFixed()
+	_u.mutation.SetCacheCreationInflateFixed(v)
+	return _u
+}
+
+// SetNillableCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillableCacheCreationInflateFixed(v *float64) *GroupUpdateOne {
+	if v != nil {
+		_u.SetCacheCreationInflateFixed(*v)
+	}
+	return _u
+}
+
+// AddCacheCreationInflateFixed adds value to the "cache_creation_inflate_fixed" field.
+func (_u *GroupUpdateOne) AddCacheCreationInflateFixed(v float64) *GroupUpdateOne {
+	_u.mutation.AddCacheCreationInflateFixed(v)
+	return _u
+}
+
 // SetAllowMessagesDispatch sets the "allow_messages_dispatch" field.
 func (_u *GroupUpdateOne) SetAllowMessagesDispatch(v bool) *GroupUpdateOne {
 	_u.mutation.SetAllowMessagesDispatch(v)
@@ -2352,6 +2448,18 @@ func (_u *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error)
 	}
 	if value, ok := _u.mutation.AddedSortOrder(); ok {
 		_spec.AddField(group.FieldSortOrder, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.CacheCreationInflatePercent(); ok {
+		_spec.SetField(group.FieldCacheCreationInflatePercent, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedCacheCreationInflatePercent(); ok {
+		_spec.AddField(group.FieldCacheCreationInflatePercent, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.CacheCreationInflateFixed(); ok {
+		_spec.SetField(group.FieldCacheCreationInflateFixed, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedCacheCreationInflateFixed(); ok {
+		_spec.AddField(group.FieldCacheCreationInflateFixed, field.TypeFloat64, value)
 	}
 	if value, ok := _u.mutation.AllowMessagesDispatch(); ok {
 		_spec.SetField(group.FieldAllowMessagesDispatch, field.TypeBool, value)

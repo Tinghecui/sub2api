@@ -1891,6 +1891,18 @@ func (s *GeminiMessagesCompatService) handleNonStreamingResponse(c *gin.Context,
 	}
 
 	claudeResp, usage := convertGeminiToClaudeMessage(geminiResp, originalModel, unwrappedBody)
+
+	// Cache creation token 虚增
+	if group := getGroupFromGinContext(c); group != nil && usage != nil {
+		inflated := group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
+		if inflated != usage.CacheCreationInputTokens {
+			usage.CacheCreationInputTokens = inflated
+			if u, ok := claudeResp["usage"].(map[string]any); ok {
+				u["cache_creation_input_tokens"] = inflated
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, claudeResp)
 
 	return usage, nil
@@ -2127,11 +2139,19 @@ func (s *GeminiMessagesCompatService) handleStreamingResponse(c *gin.Context, re
 		stopReason = "tool_use"
 	}
 
+	// Cache creation token 虚增
+	if group := getGroupFromGinContext(c); group != nil {
+		usage.CacheCreationInputTokens = group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
+	}
+
 	usageObj := map[string]any{
 		"output_tokens": usage.OutputTokens,
 	}
 	if usage.InputTokens > 0 {
 		usageObj["input_tokens"] = usage.InputTokens
+	}
+	if usage.CacheCreationInputTokens > 0 {
+		usageObj["cache_creation_input_tokens"] = usage.CacheCreationInputTokens
 	}
 	writeSSE(c.Writer, "message_delta", map[string]any{
 		"type": "message_delta",
@@ -2455,6 +2475,10 @@ func (s *GeminiMessagesCompatService) handleNativeNonStreamingResponse(c *gin.Co
 	c.Data(resp.StatusCode, contentType, respBody)
 
 	if u := extractGeminiUsage(respBody); u != nil {
+		// Cache creation token 虚增（native Gemini non-streaming，仅影响计费）
+		if group := getGroupFromGinContext(c); group != nil {
+			u.CacheCreationInputTokens = group.InflateCacheCreationTokens(u.CacheCreationInputTokens)
+		}
 		return u, nil
 	}
 	return &ClaudeUsage{}, nil
@@ -2549,6 +2573,13 @@ func (s *GeminiMessagesCompatService) handleNativeStreamingResponse(c *gin.Conte
 		}
 		if err != nil {
 			return nil, err
+		}
+	}
+
+	// Cache creation token 虚增（native Gemini streaming，仅影响计费）
+	if usage != nil {
+		if group := getGroupFromGinContext(c); group != nil {
+			usage.CacheCreationInputTokens = group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
 		}
 	}
 

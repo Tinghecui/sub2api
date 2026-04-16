@@ -8250,6 +8250,10 @@ type GroupMutation struct {
 	appendsupported_model_scopes            []string
 	sort_order                              *int
 	addsort_order                           *int
+	cache_creation_inflate_percent          *float64
+	addcache_creation_inflate_percent       *float64
+	cache_creation_inflate_fixed            *float64
+	addcache_creation_inflate_fixed         *float64
 	allow_messages_dispatch                 *bool
 	require_oauth_only                      *bool
 	require_privacy_set                     *bool
@@ -9663,6 +9667,118 @@ func (m *GroupMutation) ResetSortOrder() {
 	m.addsort_order = nil
 }
 
+// SetCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field.
+func (m *GroupMutation) SetCacheCreationInflatePercent(f float64) {
+	m.cache_creation_inflate_percent = &f
+	m.addcache_creation_inflate_percent = nil
+}
+
+// CacheCreationInflatePercent returns the value of the "cache_creation_inflate_percent" field in the mutation.
+func (m *GroupMutation) CacheCreationInflatePercent() (r float64, exists bool) {
+	v := m.cache_creation_inflate_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCacheCreationInflatePercent returns the old "cache_creation_inflate_percent" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldCacheCreationInflatePercent(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCacheCreationInflatePercent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCacheCreationInflatePercent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCacheCreationInflatePercent: %w", err)
+	}
+	return oldValue.CacheCreationInflatePercent, nil
+}
+
+// AddCacheCreationInflatePercent adds f to the "cache_creation_inflate_percent" field.
+func (m *GroupMutation) AddCacheCreationInflatePercent(f float64) {
+	if m.addcache_creation_inflate_percent != nil {
+		*m.addcache_creation_inflate_percent += f
+	} else {
+		m.addcache_creation_inflate_percent = &f
+	}
+}
+
+// AddedCacheCreationInflatePercent returns the value that was added to the "cache_creation_inflate_percent" field in this mutation.
+func (m *GroupMutation) AddedCacheCreationInflatePercent() (r float64, exists bool) {
+	v := m.addcache_creation_inflate_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCacheCreationInflatePercent resets all changes to the "cache_creation_inflate_percent" field.
+func (m *GroupMutation) ResetCacheCreationInflatePercent() {
+	m.cache_creation_inflate_percent = nil
+	m.addcache_creation_inflate_percent = nil
+}
+
+// SetCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field.
+func (m *GroupMutation) SetCacheCreationInflateFixed(f float64) {
+	m.cache_creation_inflate_fixed = &f
+	m.addcache_creation_inflate_fixed = nil
+}
+
+// CacheCreationInflateFixed returns the value of the "cache_creation_inflate_fixed" field in the mutation.
+func (m *GroupMutation) CacheCreationInflateFixed() (r float64, exists bool) {
+	v := m.cache_creation_inflate_fixed
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCacheCreationInflateFixed returns the old "cache_creation_inflate_fixed" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldCacheCreationInflateFixed(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCacheCreationInflateFixed is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCacheCreationInflateFixed requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCacheCreationInflateFixed: %w", err)
+	}
+	return oldValue.CacheCreationInflateFixed, nil
+}
+
+// AddCacheCreationInflateFixed adds f to the "cache_creation_inflate_fixed" field.
+func (m *GroupMutation) AddCacheCreationInflateFixed(f float64) {
+	if m.addcache_creation_inflate_fixed != nil {
+		*m.addcache_creation_inflate_fixed += f
+	} else {
+		m.addcache_creation_inflate_fixed = &f
+	}
+}
+
+// AddedCacheCreationInflateFixed returns the value that was added to the "cache_creation_inflate_fixed" field in this mutation.
+func (m *GroupMutation) AddedCacheCreationInflateFixed() (r float64, exists bool) {
+	v := m.addcache_creation_inflate_fixed
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCacheCreationInflateFixed resets all changes to the "cache_creation_inflate_fixed" field.
+func (m *GroupMutation) ResetCacheCreationInflateFixed() {
+	m.cache_creation_inflate_fixed = nil
+	m.addcache_creation_inflate_fixed = nil
+}
+
 // SetAllowMessagesDispatch sets the "allow_messages_dispatch" field.
 func (m *GroupMutation) SetAllowMessagesDispatch(b bool) {
 	m.allow_messages_dispatch = &b
@@ -10201,7 +10317,7 @@ func (m *GroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GroupMutation) Fields() []string {
-	fields := make([]string, 0, 30)
+	fields := make([]string, 0, 32)
 	if m.created_at != nil {
 		fields = append(fields, group.FieldCreatedAt)
 	}
@@ -10277,6 +10393,12 @@ func (m *GroupMutation) Fields() []string {
 	if m.sort_order != nil {
 		fields = append(fields, group.FieldSortOrder)
 	}
+	if m.cache_creation_inflate_percent != nil {
+		fields = append(fields, group.FieldCacheCreationInflatePercent)
+	}
+	if m.cache_creation_inflate_fixed != nil {
+		fields = append(fields, group.FieldCacheCreationInflateFixed)
+	}
 	if m.allow_messages_dispatch != nil {
 		fields = append(fields, group.FieldAllowMessagesDispatch)
 	}
@@ -10350,6 +10472,10 @@ func (m *GroupMutation) Field(name string) (ent.Value, bool) {
 		return m.SupportedModelScopes()
 	case group.FieldSortOrder:
 		return m.SortOrder()
+	case group.FieldCacheCreationInflatePercent:
+		return m.CacheCreationInflatePercent()
+	case group.FieldCacheCreationInflateFixed:
+		return m.CacheCreationInflateFixed()
 	case group.FieldAllowMessagesDispatch:
 		return m.AllowMessagesDispatch()
 	case group.FieldRequireOauthOnly:
@@ -10419,6 +10545,10 @@ func (m *GroupMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldSupportedModelScopes(ctx)
 	case group.FieldSortOrder:
 		return m.OldSortOrder(ctx)
+	case group.FieldCacheCreationInflatePercent:
+		return m.OldCacheCreationInflatePercent(ctx)
+	case group.FieldCacheCreationInflateFixed:
+		return m.OldCacheCreationInflateFixed(ctx)
 	case group.FieldAllowMessagesDispatch:
 		return m.OldAllowMessagesDispatch(ctx)
 	case group.FieldRequireOauthOnly:
@@ -10613,6 +10743,20 @@ func (m *GroupMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetSortOrder(v)
 		return nil
+	case group.FieldCacheCreationInflatePercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCacheCreationInflatePercent(v)
+		return nil
+	case group.FieldCacheCreationInflateFixed:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCacheCreationInflateFixed(v)
+		return nil
 	case group.FieldAllowMessagesDispatch:
 		v, ok := value.(bool)
 		if !ok {
@@ -10689,6 +10833,12 @@ func (m *GroupMutation) AddedFields() []string {
 	if m.addsort_order != nil {
 		fields = append(fields, group.FieldSortOrder)
 	}
+	if m.addcache_creation_inflate_percent != nil {
+		fields = append(fields, group.FieldCacheCreationInflatePercent)
+	}
+	if m.addcache_creation_inflate_fixed != nil {
+		fields = append(fields, group.FieldCacheCreationInflateFixed)
+	}
 	return fields
 }
 
@@ -10719,6 +10869,10 @@ func (m *GroupMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedFallbackGroupIDOnInvalidRequest()
 	case group.FieldSortOrder:
 		return m.AddedSortOrder()
+	case group.FieldCacheCreationInflatePercent:
+		return m.AddedCacheCreationInflatePercent()
+	case group.FieldCacheCreationInflateFixed:
+		return m.AddedCacheCreationInflateFixed()
 	}
 	return nil, false
 }
@@ -10804,6 +10958,20 @@ func (m *GroupMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSortOrder(v)
+		return nil
+	case group.FieldCacheCreationInflatePercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCacheCreationInflatePercent(v)
+		return nil
+	case group.FieldCacheCreationInflateFixed:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCacheCreationInflateFixed(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Group numeric field %s", name)
@@ -10975,6 +11143,12 @@ func (m *GroupMutation) ResetField(name string) error {
 		return nil
 	case group.FieldSortOrder:
 		m.ResetSortOrder()
+		return nil
+	case group.FieldCacheCreationInflatePercent:
+		m.ResetCacheCreationInflatePercent()
+		return nil
+	case group.FieldCacheCreationInflateFixed:
+		m.ResetCacheCreationInflateFixed()
 		return nil
 	case group.FieldAllowMessagesDispatch:
 		m.ResetAllowMessagesDispatch()

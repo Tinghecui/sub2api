@@ -491,6 +491,28 @@
           />
           <p class="input-hint">{{ t("admin.groups.rateMultiplierHint") }}</p>
         </div>
+        <div>
+          <label class="input-label">缓存写入虚增百分比 (%)</label>
+          <input
+            v-model.number="createForm.cache_creation_inflate_percent"
+            type="number"
+            step="0.01"
+            min="0"
+            class="input"
+          />
+          <p class="input-hint">对上游返回的 cache_creation_input_tokens 按百分比虚增（如 50 表示增加 50%）</p>
+        </div>
+        <div>
+          <label class="input-label">缓存写入虚增固定值</label>
+          <input
+            v-model.number="createForm.cache_creation_inflate_fixed"
+            type="number"
+            step="1"
+            min="0"
+            class="input"
+          />
+          <p class="input-hint">对上游返回的 cache_creation_input_tokens 额外加固定数量</p>
+        </div>
         <div
           v-if="createForm.subscription_type !== 'subscription'"
           data-tour="group-form-exclusive"
@@ -1610,6 +1632,28 @@
             class="input"
             data-tour="group-form-multiplier"
           />
+        </div>
+        <div>
+          <label class="input-label">缓存写入虚增百分比 (%)</label>
+          <input
+            v-model.number="editForm.cache_creation_inflate_percent"
+            type="number"
+            step="0.01"
+            min="0"
+            class="input"
+          />
+          <p class="input-hint">对上游返回的 cache_creation_input_tokens 按百分比虚增（如 50 表示增加 50%）</p>
+        </div>
+        <div>
+          <label class="input-label">缓存写入虚增固定值</label>
+          <input
+            v-model.number="editForm.cache_creation_inflate_fixed"
+            type="number"
+            step="1"
+            min="0"
+            class="input"
+          />
+          <p class="input-hint">对上游返回的 cache_creation_input_tokens 额外加固定数量</p>
         </div>
         <div v-if="editForm.subscription_type !== 'subscription'">
           <div class="mb-1.5 flex items-center gap-1">
@@ -2986,6 +3030,9 @@ const createForm = reactive({
   supported_model_scopes: ["claude", "gemini_text", "gemini_image"] as string[],
   // MCP XML 协议注入开关（仅 antigravity 平台）
   mcp_xml_inject: true,
+  // Cache creation token 虚增配置
+  cache_creation_inflate_percent: 0,
+  cache_creation_inflate_fixed: 0,
   // 从分组复制账号
   copy_accounts_from_group_ids: [] as number[],
 });
@@ -3267,6 +3314,9 @@ const editForm = reactive({
   supported_model_scopes: ["claude", "gemini_text", "gemini_image"] as string[],
   // MCP XML 协议注入开关（仅 antigravity 平台）
   mcp_xml_inject: true,
+  // Cache creation token 虚增配置
+  cache_creation_inflate_percent: 0,
+  cache_creation_inflate_fixed: 0,
   // 从分组复制账号
   copy_accounts_from_group_ids: [] as number[],
 });
@@ -3440,6 +3490,8 @@ const closeCreateModal = () => {
   createForm.require_privacy_set = false;
   createForm.supported_model_scopes = ["claude", "gemini_text", "gemini_image"];
   createForm.mcp_xml_inject = true;
+  createForm.cache_creation_inflate_percent = 0;
+  createForm.cache_creation_inflate_fixed = 0;
   createForm.copy_accounts_from_group_ids = [];
   createModelRoutingRules.value = [];
 };
@@ -3559,6 +3611,8 @@ const handleEdit = async (group: AdminGroup) => {
     "gemini_image",
   ];
   editForm.mcp_xml_inject = group.mcp_xml_inject ?? true;
+  editForm.cache_creation_inflate_percent = group.cache_creation_inflate_percent ?? 0;
+  editForm.cache_creation_inflate_fixed = group.cache_creation_inflate_fixed ?? 0;
   editForm.copy_accounts_from_group_ids = []; // 复制账号字段每次编辑时重置为空
   // 加载模型路由规则（异步加载账号名称）
   editModelRoutingRules.value = await convertApiFormatToRoutingRules(

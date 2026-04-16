@@ -4954,6 +4954,29 @@ func (s *GatewayService) handleStreamingResponseAnthropicAPIKeyPassthrough(
 					firstTokenMs = &ms
 				}
 				s.parseSSEUsagePassthrough(data, usage)
+
+				// Cache creation token 虚增（passthrough streaming）
+				if group := getGroupFromGinContext(c); group != nil && (group.CacheCreationInflatePercent != 0 || group.CacheCreationInflateFixed != 0) {
+					if gjson.Get(data, "usage.cache_creation_input_tokens").Exists() || gjson.Get(data, "message.usage.cache_creation_input_tokens").Exists() {
+						var event map[string]any
+						if json.Unmarshal([]byte(data), &event) == nil {
+							modified := false
+							if msg, ok := event["message"].(map[string]any); ok {
+								if u, ok := msg["usage"].(map[string]any); ok {
+									modified = inflateCacheCreationJSON(u, group) || modified
+								}
+							}
+							if u, ok := event["usage"].(map[string]any); ok {
+								modified = inflateCacheCreationJSON(u, group) || modified
+							}
+							if modified {
+								if newData, err := json.Marshal(event); err == nil {
+									line = "data: " + string(newData)
+								}
+							}
+						}
+					}
+				}
 			} else {
 				trimmed := strings.TrimSpace(line)
 				if strings.HasPrefix(trimmed, "event:") && anthropicStreamEventIsTerminal(strings.TrimSpace(strings.TrimPrefix(trimmed, "event:")), "") {
@@ -5137,6 +5160,17 @@ func (s *GatewayService) handleNonStreamingResponseAnthropicAPIKeyPassthrough(
 	}
 
 	usage := parseClaudeUsageFromResponseBody(body)
+
+	// Cache creation token 虚增（passthrough non-streaming）
+	if group := getGroupFromGinContext(c); group != nil {
+		inflated := group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
+		if inflated != usage.CacheCreationInputTokens {
+			usage.CacheCreationInputTokens = inflated
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation_input_tokens", inflated); err == nil {
+				body = newBody
+			}
+		}
+	}
 
 	writeAnthropicPassthroughResponseHeaders(c.Writer.Header(), resp.Header, s.responseHeaderFilter)
 	contentType := strings.TrimSpace(resp.Header.Get("Content-Type"))
@@ -6802,6 +6836,22 @@ func (s *GatewayService) handleStreamingResponse(ctx context.Context, resp *http
 			}
 		}
 
+		// Cache creation token 虚增
+		if group := getGroupFromGinContext(c); group != nil && (group.CacheCreationInflatePercent != 0 || group.CacheCreationInflateFixed != 0) {
+			if eventType == "message_start" {
+				if msg, ok := event["message"].(map[string]any); ok {
+					if u, ok := msg["usage"].(map[string]any); ok {
+						eventChanged = inflateCacheCreationJSON(u, group) || eventChanged
+					}
+				}
+			}
+			if eventType == "message_delta" {
+				if u, ok := event["usage"].(map[string]any); ok {
+					eventChanged = inflateCacheCreationJSON(u, group) || eventChanged
+				}
+			}
+		}
+
 		if needModelReplace {
 			if msg, ok := event["message"].(map[string]any); ok {
 				if model, ok := msg["model"].(string); ok && model == mappedModel {
@@ -7171,6 +7221,34 @@ func rewriteCacheCreationJSON(usageObj map[string]any, target string) bool {
 	return true
 }
 
+// getGroupFromGinContext retrieves the Group from gin context (set by handler).
+func getGroupFromGinContext(c *gin.Context) *Group {
+	if v, exists := c.Get(GroupContextKey); exists {
+		if g, ok := v.(*Group); ok {
+			return g
+		}
+	}
+	return nil
+}
+
+// inflateCacheCreationJSON applies cache_creation token inflation on a JSON usage map.
+// Returns true if the object was modified.
+func inflateCacheCreationJSON(usageObj map[string]any, group *Group) bool {
+	if group == nil || (group.CacheCreationInflatePercent == 0 && group.CacheCreationInflateFixed == 0) {
+		return false
+	}
+	v, ok := parseSSEUsageInt(usageObj["cache_creation_input_tokens"])
+	if !ok || (v == 0 && group.CacheCreationInflateFixed == 0) {
+		return false
+	}
+	inflated := group.InflateCacheCreationTokens(v)
+	if inflated == v {
+		return false
+	}
+	usageObj["cache_creation_input_tokens"] = float64(inflated)
+	return true
+}
+
 func (s *GatewayService) handleNonStreamingResponse(ctx context.Context, resp *http.Response, c *gin.Context, account *Account, originalModel, mappedModel string) (*ClaudeUsage, error) {
 	// 更新5h窗口状态
 	s.rateLimitService.UpdateSessionWindow(ctx, account, resp.Header)
@@ -7227,6 +7305,17 @@ func (s *GatewayService) handleNonStreamingResponse(ctx context.Context, resp *h
 				body = newBody
 			}
 			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", response.Usage.CacheCreation1hTokens); err == nil {
+				body = newBody
+			}
+		}
+	}
+
+	// Cache creation token 虚增
+	if group := getGroupFromGinContext(c); group != nil {
+		inflated := group.InflateCacheCreationTokens(response.Usage.CacheCreationInputTokens)
+		if inflated != response.Usage.CacheCreationInputTokens {
+			response.Usage.CacheCreationInputTokens = inflated
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation_input_tokens", inflated); err == nil {
 				body = newBody
 			}
 		}

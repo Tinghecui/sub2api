@@ -248,8 +248,12 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 		return
 	}
 
-	// 设置请求所属分组 ID（用于渠道级功能判断，如 WebSearch 模拟）
+	// 设置请求所属分组（用于渠道级功能判断、cache creation 虚增等）
 	parsedReq.GroupID = apiKey.GroupID
+	parsedReq.Group = apiKey.Group
+	if apiKey.Group != nil {
+		c.Set(service.GroupContextKey, apiKey.Group)
+	}
 
 	// 计算粘性会话hash
 	parsedReq.SessionContext = &service.SessionContext{

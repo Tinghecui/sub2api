@@ -157,6 +157,9 @@ type CreateGroupInput struct {
 	RequireOAuthOnly            bool
 	RequirePrivacySet           bool
 	MessagesDispatchModelConfig OpenAIMessagesDispatchModelConfig
+	// Cache creation token 虚增配置
+	CacheCreationInflatePercent float64
+	CacheCreationInflateFixed   float64
 	// 从指定分组复制账号（创建分组后在同一事务内绑定）
 	CopyAccountsFromGroupIDs []int64
 }
@@ -192,6 +195,9 @@ type UpdateGroupInput struct {
 	RequireOAuthOnly            *bool
 	RequirePrivacySet           *bool
 	MessagesDispatchModelConfig *OpenAIMessagesDispatchModelConfig
+	// Cache creation token 虚增配置
+	CacheCreationInflatePercent *float64
+	CacheCreationInflateFixed   *float64
 	// 从指定分组复制账号（同步操作：先清空当前分组的账号绑定，再绑定源分组的账号）
 	CopyAccountsFromGroupIDs []int64
 }
@@ -911,6 +917,8 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		RequirePrivacySet:               input.RequirePrivacySet,
 		DefaultMappedModel:              input.DefaultMappedModel,
 		MessagesDispatchModelConfig:     normalizeOpenAIMessagesDispatchModelConfig(input.MessagesDispatchModelConfig),
+		CacheCreationInflatePercent:     input.CacheCreationInflatePercent,
+		CacheCreationInflateFixed:       input.CacheCreationInflateFixed,
 	}
 	sanitizeGroupMessagesDispatchFields(group)
 	if err := s.groupRepo.Create(ctx, group); err != nil {
@@ -1143,6 +1151,14 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 		group.MessagesDispatchModelConfig = normalizeOpenAIMessagesDispatchModelConfig(*input.MessagesDispatchModelConfig)
 	}
 	sanitizeGroupMessagesDispatchFields(group)
+
+	// Cache creation token 虚增配置
+	if input.CacheCreationInflatePercent != nil {
+		group.CacheCreationInflatePercent = *input.CacheCreationInflatePercent
+	}
+	if input.CacheCreationInflateFixed != nil {
+		group.CacheCreationInflateFixed = *input.CacheCreationInflateFixed
+	}
 
 	if err := s.groupRepo.Update(ctx, group); err != nil {
 		return nil, err

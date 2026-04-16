@@ -2960,6 +2960,30 @@ func (s *OpenAIGatewayService) handleStreamingResponsePassthrough(
 				firstTokenMs = &ms
 			}
 			s.parseSSEUsageBytes(dataBytes, usage)
+
+			// Cache creation token 虚增（OpenAI passthrough streaming）
+			if group := getGroupFromGinContext(c); group != nil && (group.CacheCreationInflatePercent != 0 || group.CacheCreationInflateFixed != 0) {
+				if gjson.GetBytes(dataBytes, "usage.cache_creation_input_tokens").Exists() ||
+					gjson.GetBytes(dataBytes, "response.usage.cache_creation_input_tokens").Exists() {
+					var event map[string]any
+					if json.Unmarshal(dataBytes, &event) == nil {
+						modified := false
+						if u, ok := event["usage"].(map[string]any); ok {
+							modified = inflateCacheCreationJSON(u, group) || modified
+						}
+						if r, ok := event["response"].(map[string]any); ok {
+							if u, ok := r["usage"].(map[string]any); ok {
+								modified = inflateCacheCreationJSON(u, group) || modified
+							}
+						}
+						if modified {
+							if newData, err := json.Marshal(event); err == nil {
+								line = "data: " + string(newData)
+							}
+						}
+					}
+				}
+			}
 		}
 
 		if !clientDisconnected {
@@ -3044,6 +3068,19 @@ func (s *OpenAIGatewayService) handleNonStreamingResponsePassthrough(
 	if !usageParsed {
 		// 兜底：尝试从 SSE 文本中解析 usage
 		usage = s.parseSSEUsageFromBody(string(body))
+	}
+
+	// Cache creation token 虚增（OpenAI passthrough non-streaming）
+	if group := getGroupFromGinContext(c); group != nil {
+		inflated := group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
+		if inflated != usage.CacheCreationInputTokens {
+			usage.CacheCreationInputTokens = inflated
+			if gjson.GetBytes(body, "usage.cache_creation_input_tokens").Exists() {
+				if newBody, err := sjson.SetBytes(body, "usage.cache_creation_input_tokens", inflated); err == nil {
+					body = newBody
+				}
+			}
+		}
 	}
 
 	writeOpenAIPassthroughResponseHeaders(c.Writer.Header(), resp.Header, s.responseHeaderFilter)
@@ -3681,6 +3718,32 @@ func (s *OpenAIGatewayService) handleStreamingResponse(ctx context.Context, resp
 				line = "data: " + data
 			}
 
+			// Cache creation token 虚增（OpenAI streaming）
+			if group := getGroupFromGinContext(c); group != nil && (group.CacheCreationInflatePercent != 0 || group.CacheCreationInflateFixed != 0) {
+				if gjson.GetBytes(dataBytes, "usage.cache_creation_input_tokens").Exists() ||
+					gjson.GetBytes(dataBytes, "response.usage.cache_creation_input_tokens").Exists() {
+					var event map[string]any
+					if json.Unmarshal(dataBytes, &event) == nil {
+						modified := false
+						if u, ok := event["usage"].(map[string]any); ok {
+							modified = inflateCacheCreationJSON(u, group) || modified
+						}
+						if r, ok := event["response"].(map[string]any); ok {
+							if u, ok := r["usage"].(map[string]any); ok {
+								modified = inflateCacheCreationJSON(u, group) || modified
+							}
+						}
+						if modified {
+							if newData, err := json.Marshal(event); err == nil {
+								dataBytes = newData
+								data = string(newData)
+								line = "data: " + data
+							}
+						}
+					}
+				}
+			}
+
 			// 写入客户端（客户端断开后继续 drain 上游）
 			if !clientDisconnected {
 				shouldFlush := queueDrained
@@ -3957,6 +4020,20 @@ func (s *OpenAIGatewayService) handleNonStreamingResponse(ctx context.Context, r
 		return nil, fmt.Errorf("parse response: invalid json response")
 	}
 	usage := &usageValue
+
+	// Cache creation token 虚增
+	if group := getGroupFromGinContext(c); group != nil {
+		inflated := group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
+		if inflated != usage.CacheCreationInputTokens {
+			usage.CacheCreationInputTokens = inflated
+			// OpenAI 格式不一定有 cache_creation_input_tokens 字段，但如有则更新
+			if gjson.GetBytes(body, "usage.cache_creation_input_tokens").Exists() {
+				if newBody, err := sjson.SetBytes(body, "usage.cache_creation_input_tokens", inflated); err == nil {
+					body = newBody
+				}
+			}
+		}
+	}
 
 	// Replace model in response if needed
 	if originalModel != mappedModel {

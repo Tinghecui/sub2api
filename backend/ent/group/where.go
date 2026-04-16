@@ -170,6 +170,16 @@ func SortOrder(v int) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldSortOrder, v))
 }
 
+// CacheCreationInflatePercent applies equality check predicate on the "cache_creation_inflate_percent" field. It's identical to CacheCreationInflatePercentEQ.
+func CacheCreationInflatePercent(v float64) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldCacheCreationInflatePercent, v))
+}
+
+// CacheCreationInflateFixed applies equality check predicate on the "cache_creation_inflate_fixed" field. It's identical to CacheCreationInflateFixedEQ.
+func CacheCreationInflateFixed(v float64) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldCacheCreationInflateFixed, v))
+}
+
 // AllowMessagesDispatch applies equality check predicate on the "allow_messages_dispatch" field. It's identical to AllowMessagesDispatchEQ.
 func AllowMessagesDispatch(v bool) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldAllowMessagesDispatch, v))
@@ -1223,6 +1233,86 @@ func SortOrderLT(v int) predicate.Group {
 // SortOrderLTE applies the LTE predicate on the "sort_order" field.
 func SortOrderLTE(v int) predicate.Group {
 	return predicate.Group(sql.FieldLTE(FieldSortOrder, v))
+}
+
+// CacheCreationInflatePercentEQ applies the EQ predicate on the "cache_creation_inflate_percent" field.
+func CacheCreationInflatePercentEQ(v float64) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldCacheCreationInflatePercent, v))
+}
+
+// CacheCreationInflatePercentNEQ applies the NEQ predicate on the "cache_creation_inflate_percent" field.
+func CacheCreationInflatePercentNEQ(v float64) predicate.Group {
+	return predicate.Group(sql.FieldNEQ(FieldCacheCreationInflatePercent, v))
+}
+
+// CacheCreationInflatePercentIn applies the In predicate on the "cache_creation_inflate_percent" field.
+func CacheCreationInflatePercentIn(vs ...float64) predicate.Group {
+	return predicate.Group(sql.FieldIn(FieldCacheCreationInflatePercent, vs...))
+}
+
+// CacheCreationInflatePercentNotIn applies the NotIn predicate on the "cache_creation_inflate_percent" field.
+func CacheCreationInflatePercentNotIn(vs ...float64) predicate.Group {
+	return predicate.Group(sql.FieldNotIn(FieldCacheCreationInflatePercent, vs...))
+}
+
+// CacheCreationInflatePercentGT applies the GT predicate on the "cache_creation_inflate_percent" field.
+func CacheCreationInflatePercentGT(v float64) predicate.Group {
+	return predicate.Group(sql.FieldGT(FieldCacheCreationInflatePercent, v))
+}
+
+// CacheCreationInflatePercentGTE applies the GTE predicate on the "cache_creation_inflate_percent" field.
+func CacheCreationInflatePercentGTE(v float64) predicate.Group {
+	return predicate.Group(sql.FieldGTE(FieldCacheCreationInflatePercent, v))
+}
+
+// CacheCreationInflatePercentLT applies the LT predicate on the "cache_creation_inflate_percent" field.
+func CacheCreationInflatePercentLT(v float64) predicate.Group {
+	return predicate.Group(sql.FieldLT(FieldCacheCreationInflatePercent, v))
+}
+
+// CacheCreationInflatePercentLTE applies the LTE predicate on the "cache_creation_inflate_percent" field.
+func CacheCreationInflatePercentLTE(v float64) predicate.Group {
+	return predicate.Group(sql.FieldLTE(FieldCacheCreationInflatePercent, v))
+}
+
+// CacheCreationInflateFixedEQ applies the EQ predicate on the "cache_creation_inflate_fixed" field.
+func CacheCreationInflateFixedEQ(v float64) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldCacheCreationInflateFixed, v))
+}
+
+// CacheCreationInflateFixedNEQ applies the NEQ predicate on the "cache_creation_inflate_fixed" field.
+func CacheCreationInflateFixedNEQ(v float64) predicate.Group {
+	return predicate.Group(sql.FieldNEQ(FieldCacheCreationInflateFixed, v))
+}
+
+// CacheCreationInflateFixedIn applies the In predicate on the "cache_creation_inflate_fixed" field.
+func CacheCreationInflateFixedIn(vs ...float64) predicate.Group {
+	return predicate.Group(sql.FieldIn(FieldCacheCreationInflateFixed, vs...))
+}
+
+// CacheCreationInflateFixedNotIn applies the NotIn predicate on the "cache_creation_inflate_fixed" field.
+func CacheCreationInflateFixedNotIn(vs ...float64) predicate.Group {
+	return predicate.Group(sql.FieldNotIn(FieldCacheCreationInflateFixed, vs...))
+}
+
+// CacheCreationInflateFixedGT applies the GT predicate on the "cache_creation_inflate_fixed" field.
+func CacheCreationInflateFixedGT(v float64) predicate.Group {
+	return predicate.Group(sql.FieldGT(FieldCacheCreationInflateFixed, v))
+}
+
+// CacheCreationInflateFixedGTE applies the GTE predicate on the "cache_creation_inflate_fixed" field.
+func CacheCreationInflateFixedGTE(v float64) predicate.Group {
+	return predicate.Group(sql.FieldGTE(FieldCacheCreationInflateFixed, v))
+}
+
+// CacheCreationInflateFixedLT applies the LT predicate on the "cache_creation_inflate_fixed" field.
+func CacheCreationInflateFixedLT(v float64) predicate.Group {
+	return predicate.Group(sql.FieldLT(FieldCacheCreationInflateFixed, v))
+}
+
+// CacheCreationInflateFixedLTE applies the LTE predicate on the "cache_creation_inflate_fixed" field.
+func CacheCreationInflateFixedLTE(v float64) predicate.Group {
+	return predicate.Group(sql.FieldLTE(FieldCacheCreationInflateFixed, v))
 }
 
 // AllowMessagesDispatchEQ applies the EQ predicate on the "allow_messages_dispatch" field.

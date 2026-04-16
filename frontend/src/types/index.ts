@@ -444,6 +444,10 @@ export interface AdminGroup extends Group {
 
   // 分组排序
   sort_order: number
+
+  // Cache creation token 虚增配置
+  cache_creation_inflate_percent: number
+  cache_creation_inflate_fixed: number
 }
 
 export interface ApiKey {

@@ -1,0 +1,2 @@
+ALTER TABLE groups ADD COLUMN IF NOT EXISTS cache_creation_inflate_percent DECIMAL(10,4) NOT NULL DEFAULT 0;
+ALTER TABLE groups ADD COLUMN IF NOT EXISTS cache_creation_inflate_fixed DECIMAL(20,4) NOT NULL DEFAULT 0;

@@ -69,6 +69,10 @@ type Group struct {
 	SupportedModelScopes []string `json:"supported_model_scopes,omitempty"`
 	// 分组显示排序，数值越小越靠前
 	SortOrder int `json:"sort_order,omitempty"`
+	// cache_creation_input_tokens 虚增百分比（如 50 表示增加 50%）
+	CacheCreationInflatePercent float64 `json:"cache_creation_inflate_percent,omitempty"`
+	// cache_creation_input_tokens 虚增固定量
+	CacheCreationInflateFixed float64 `json:"cache_creation_inflate_fixed,omitempty"`
 	// 是否允许 /v1/messages 调度到此 OpenAI 分组
 	AllowMessagesDispatch bool `json:"allow_messages_dispatch,omitempty"`
 	// 仅允许非 apikey 类型账号关联到此分组
@@ -189,7 +193,7 @@ func (*Group) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case group.FieldIsExclusive, group.FieldClaudeCodeOnly, group.FieldModelRoutingEnabled, group.FieldMcpXMLInject, group.FieldAllowMessagesDispatch, group.FieldRequireOauthOnly, group.FieldRequirePrivacySet:
 			values[i] = new(sql.NullBool)
-		case group.FieldRateMultiplier, group.FieldDailyLimitUsd, group.FieldWeeklyLimitUsd, group.FieldMonthlyLimitUsd, group.FieldImagePrice1k, group.FieldImagePrice2k, group.FieldImagePrice4k:
+		case group.FieldRateMultiplier, group.FieldDailyLimitUsd, group.FieldWeeklyLimitUsd, group.FieldMonthlyLimitUsd, group.FieldImagePrice1k, group.FieldImagePrice2k, group.FieldImagePrice4k, group.FieldCacheCreationInflatePercent, group.FieldCacheCreationInflateFixed:
 			values[i] = new(sql.NullFloat64)
 		case group.FieldID, group.FieldDefaultValidityDays, group.FieldFallbackGroupID, group.FieldFallbackGroupIDOnInvalidRequest, group.FieldSortOrder:
 			values[i] = new(sql.NullInt64)
@@ -381,6 +385,18 @@ func (_m *Group) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field sort_order", values[i])
 			} else if value.Valid {
 				_m.SortOrder = int(value.Int64)
+			}
+		case group.FieldCacheCreationInflatePercent:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field cache_creation_inflate_percent", values[i])
+			} else if value.Valid {
+				_m.CacheCreationInflatePercent = value.Float64
+			}
+		case group.FieldCacheCreationInflateFixed:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field cache_creation_inflate_fixed", values[i])
+			} else if value.Valid {
+				_m.CacheCreationInflateFixed = value.Float64
 			}
 		case group.FieldAllowMessagesDispatch:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -584,6 +600,12 @@ func (_m *Group) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("sort_order=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SortOrder))
+	builder.WriteString(", ")
+	builder.WriteString("cache_creation_inflate_percent=")
+	builder.WriteString(fmt.Sprintf("%v", _m.CacheCreationInflatePercent))
+	builder.WriteString(", ")
+	builder.WriteString("cache_creation_inflate_fixed=")
+	builder.WriteString(fmt.Sprintf("%v", _m.CacheCreationInflateFixed))
 	builder.WriteString(", ")
 	builder.WriteString("allow_messages_dispatch=")
 	builder.WriteString(fmt.Sprintf("%v", _m.AllowMessagesDispatch))

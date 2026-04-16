@@ -108,6 +108,9 @@ func (h *OpenAIGatewayHandler) Responses(c *gin.Context) {
 		h.errorResponse(c, http.StatusInternalServerError, "api_error", "User context not found")
 		return
 	}
+	if apiKey.Group != nil {
+		c.Set(service.GroupContextKey, apiKey.Group)
+	}
 	reqLog := requestLogger(
 		c,
 		"handler.openai_gateway.responses",
@@ -512,6 +515,9 @@ func (h *OpenAIGatewayHandler) Messages(c *gin.Context) {
 	if !ok {
 		h.anthropicErrorResponse(c, http.StatusInternalServerError, "api_error", "User context not found")
 		return
+	}
+	if apiKey.Group != nil {
+		c.Set(service.GroupContextKey, apiKey.Group)
 	}
 	reqLog := requestLogger(
 		c,
@@ -1024,6 +1030,9 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 	if !ok {
 		h.errorResponse(c, http.StatusInternalServerError, "api_error", "User context not found")
 		return
+	}
+	if apiKey.Group != nil {
+		c.Set(service.GroupContextKey, apiKey.Group)
 	}
 
 	reqLog := requestLogger(

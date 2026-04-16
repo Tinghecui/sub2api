@@ -62,6 +62,9 @@ type SessionContext struct {
 // 1. 在 Handler 层统一调用 ParseGatewayRequest 一次性解析
 // 2. 将解析结果 ParsedRequest 传递给 Service 层
 // 3. 避免重复 json.Unmarshal，减少 CPU 和内存开销
+// GroupContextKey is the gin context key for storing the Group object.
+const GroupContextKey = "sub2api_group"
+
 type ParsedRequest struct {
 	Body            []byte          // 原始请求体（保留用于转发）
 	Model           string          // 请求的模型名称
@@ -77,6 +80,8 @@ type ParsedRequest struct {
 
 	// GroupID 请求所属分组 ID（来自 API Key）
 	GroupID *int64
+	// Group 完整分组对象（用于 cache creation 虚增等）
+	Group *Group
 
 	// OnUpstreamAccepted 上游接受请求后立即调用（用于提前释放串行锁）
 	// 流式请求在收到 2xx 响应头后调用，避免持锁等流完成

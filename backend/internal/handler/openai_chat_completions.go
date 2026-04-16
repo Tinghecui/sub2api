@@ -35,6 +35,9 @@ func (h *OpenAIGatewayHandler) ChatCompletions(c *gin.Context) {
 		h.errorResponse(c, http.StatusInternalServerError, "api_error", "User context not found")
 		return
 	}
+	if apiKey.Group != nil {
+		c.Set(service.GroupContextKey, apiKey.Group)
+	}
 	reqLog := requestLogger(
 		c,
 		"handler.openai_gateway.chat_completions",

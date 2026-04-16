@@ -135,6 +135,10 @@ type AdminGroup struct {
 
 	// 分组排序
 	SortOrder int `json:"sort_order"`
+
+	// Cache creation token 虚增配置
+	CacheCreationInflatePercent float64 `json:"cache_creation_inflate_percent"`
+	CacheCreationInflateFixed   float64 `json:"cache_creation_inflate_fixed"`
 }
 
 type Account struct {

@@ -295,6 +295,11 @@ func (s *GatewayService) handleCCBufferedFromAnthropic(
 		return nil, fmt.Errorf("upstream stream ended without response")
 	}
 
+	// Cache creation token 虚增
+	if group := getGroupFromGinContext(c); group != nil {
+		usage.CacheCreationInputTokens = group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
+	}
+
 	// Update usage from accumulated delta
 	if usage.InputTokens > 0 || usage.OutputTokens > 0 {
 		finalResp.Usage = apicompat.AnthropicUsage{
@@ -469,6 +474,11 @@ func (s *GatewayService) handleCCStreamingFromAnthropic(
 	// Write [DONE] marker
 	fmt.Fprint(c.Writer, "data: [DONE]\n\n") //nolint:errcheck
 	c.Writer.Flush()
+
+	// Cache creation token 虚增
+	if group := getGroupFromGinContext(c); group != nil {
+		usage.CacheCreationInputTokens = group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
+	}
 
 	return resultWithUsage(), nil
 }

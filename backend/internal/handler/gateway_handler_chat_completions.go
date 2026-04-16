@@ -35,6 +35,9 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 		h.chatCompletionsErrorResponse(c, http.StatusInternalServerError, "api_error", "User context not found")
 		return
 	}
+	if apiKey.Group != nil {
+		c.Set(service.GroupContextKey, apiKey.Group)
+	}
 	reqLog := requestLogger(
 		c,
 		"handler.gateway.chat_completions",

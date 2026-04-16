@@ -355,6 +355,34 @@ func (_c *GroupCreate) SetNillableSortOrder(v *int) *GroupCreate {
 	return _c
 }
 
+// SetCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field.
+func (_c *GroupCreate) SetCacheCreationInflatePercent(v float64) *GroupCreate {
+	_c.mutation.SetCacheCreationInflatePercent(v)
+	return _c
+}
+
+// SetNillableCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableCacheCreationInflatePercent(v *float64) *GroupCreate {
+	if v != nil {
+		_c.SetCacheCreationInflatePercent(*v)
+	}
+	return _c
+}
+
+// SetCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field.
+func (_c *GroupCreate) SetCacheCreationInflateFixed(v float64) *GroupCreate {
+	_c.mutation.SetCacheCreationInflateFixed(v)
+	return _c
+}
+
+// SetNillableCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableCacheCreationInflateFixed(v *float64) *GroupCreate {
+	if v != nil {
+		_c.SetCacheCreationInflateFixed(*v)
+	}
+	return _c
+}
+
 // SetAllowMessagesDispatch sets the "allow_messages_dispatch" field.
 func (_c *GroupCreate) SetAllowMessagesDispatch(v bool) *GroupCreate {
 	_c.mutation.SetAllowMessagesDispatch(v)
@@ -610,6 +638,14 @@ func (_c *GroupCreate) defaults() error {
 		v := group.DefaultSortOrder
 		_c.mutation.SetSortOrder(v)
 	}
+	if _, ok := _c.mutation.CacheCreationInflatePercent(); !ok {
+		v := group.DefaultCacheCreationInflatePercent
+		_c.mutation.SetCacheCreationInflatePercent(v)
+	}
+	if _, ok := _c.mutation.CacheCreationInflateFixed(); !ok {
+		v := group.DefaultCacheCreationInflateFixed
+		_c.mutation.SetCacheCreationInflateFixed(v)
+	}
 	if _, ok := _c.mutation.AllowMessagesDispatch(); !ok {
 		v := group.DefaultAllowMessagesDispatch
 		_c.mutation.SetAllowMessagesDispatch(v)
@@ -696,6 +732,12 @@ func (_c *GroupCreate) check() error {
 	}
 	if _, ok := _c.mutation.SortOrder(); !ok {
 		return &ValidationError{Name: "sort_order", err: errors.New(`ent: missing required field "Group.sort_order"`)}
+	}
+	if _, ok := _c.mutation.CacheCreationInflatePercent(); !ok {
+		return &ValidationError{Name: "cache_creation_inflate_percent", err: errors.New(`ent: missing required field "Group.cache_creation_inflate_percent"`)}
+	}
+	if _, ok := _c.mutation.CacheCreationInflateFixed(); !ok {
+		return &ValidationError{Name: "cache_creation_inflate_fixed", err: errors.New(`ent: missing required field "Group.cache_creation_inflate_fixed"`)}
 	}
 	if _, ok := _c.mutation.AllowMessagesDispatch(); !ok {
 		return &ValidationError{Name: "allow_messages_dispatch", err: errors.New(`ent: missing required field "Group.allow_messages_dispatch"`)}
@@ -843,6 +885,14 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.SortOrder(); ok {
 		_spec.SetField(group.FieldSortOrder, field.TypeInt, value)
 		_node.SortOrder = value
+	}
+	if value, ok := _c.mutation.CacheCreationInflatePercent(); ok {
+		_spec.SetField(group.FieldCacheCreationInflatePercent, field.TypeFloat64, value)
+		_node.CacheCreationInflatePercent = value
+	}
+	if value, ok := _c.mutation.CacheCreationInflateFixed(); ok {
+		_spec.SetField(group.FieldCacheCreationInflateFixed, field.TypeFloat64, value)
+		_node.CacheCreationInflateFixed = value
 	}
 	if value, ok := _c.mutation.AllowMessagesDispatch(); ok {
 		_spec.SetField(group.FieldAllowMessagesDispatch, field.TypeBool, value)
@@ -1440,6 +1490,42 @@ func (u *GroupUpsert) AddSortOrder(v int) *GroupUpsert {
 	return u
 }
 
+// SetCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field.
+func (u *GroupUpsert) SetCacheCreationInflatePercent(v float64) *GroupUpsert {
+	u.Set(group.FieldCacheCreationInflatePercent, v)
+	return u
+}
+
+// UpdateCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateCacheCreationInflatePercent() *GroupUpsert {
+	u.SetExcluded(group.FieldCacheCreationInflatePercent)
+	return u
+}
+
+// AddCacheCreationInflatePercent adds v to the "cache_creation_inflate_percent" field.
+func (u *GroupUpsert) AddCacheCreationInflatePercent(v float64) *GroupUpsert {
+	u.Add(group.FieldCacheCreationInflatePercent, v)
+	return u
+}
+
+// SetCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field.
+func (u *GroupUpsert) SetCacheCreationInflateFixed(v float64) *GroupUpsert {
+	u.Set(group.FieldCacheCreationInflateFixed, v)
+	return u
+}
+
+// UpdateCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateCacheCreationInflateFixed() *GroupUpsert {
+	u.SetExcluded(group.FieldCacheCreationInflateFixed)
+	return u
+}
+
+// AddCacheCreationInflateFixed adds v to the "cache_creation_inflate_fixed" field.
+func (u *GroupUpsert) AddCacheCreationInflateFixed(v float64) *GroupUpsert {
+	u.Add(group.FieldCacheCreationInflateFixed, v)
+	return u
+}
+
 // SetAllowMessagesDispatch sets the "allow_messages_dispatch" field.
 func (u *GroupUpsert) SetAllowMessagesDispatch(v bool) *GroupUpsert {
 	u.Set(group.FieldAllowMessagesDispatch, v)
@@ -2032,6 +2118,48 @@ func (u *GroupUpsertOne) AddSortOrder(v int) *GroupUpsertOne {
 func (u *GroupUpsertOne) UpdateSortOrder() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateSortOrder()
+	})
+}
+
+// SetCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field.
+func (u *GroupUpsertOne) SetCacheCreationInflatePercent(v float64) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetCacheCreationInflatePercent(v)
+	})
+}
+
+// AddCacheCreationInflatePercent adds v to the "cache_creation_inflate_percent" field.
+func (u *GroupUpsertOne) AddCacheCreationInflatePercent(v float64) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.AddCacheCreationInflatePercent(v)
+	})
+}
+
+// UpdateCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateCacheCreationInflatePercent() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateCacheCreationInflatePercent()
+	})
+}
+
+// SetCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field.
+func (u *GroupUpsertOne) SetCacheCreationInflateFixed(v float64) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetCacheCreationInflateFixed(v)
+	})
+}
+
+// AddCacheCreationInflateFixed adds v to the "cache_creation_inflate_fixed" field.
+func (u *GroupUpsertOne) AddCacheCreationInflateFixed(v float64) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.AddCacheCreationInflateFixed(v)
+	})
+}
+
+// UpdateCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateCacheCreationInflateFixed() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateCacheCreationInflateFixed()
 	})
 }
 
@@ -2803,6 +2931,48 @@ func (u *GroupUpsertBulk) AddSortOrder(v int) *GroupUpsertBulk {
 func (u *GroupUpsertBulk) UpdateSortOrder() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateSortOrder()
+	})
+}
+
+// SetCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field.
+func (u *GroupUpsertBulk) SetCacheCreationInflatePercent(v float64) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetCacheCreationInflatePercent(v)
+	})
+}
+
+// AddCacheCreationInflatePercent adds v to the "cache_creation_inflate_percent" field.
+func (u *GroupUpsertBulk) AddCacheCreationInflatePercent(v float64) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.AddCacheCreationInflatePercent(v)
+	})
+}
+
+// UpdateCacheCreationInflatePercent sets the "cache_creation_inflate_percent" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateCacheCreationInflatePercent() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateCacheCreationInflatePercent()
+	})
+}
+
+// SetCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field.
+func (u *GroupUpsertBulk) SetCacheCreationInflateFixed(v float64) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetCacheCreationInflateFixed(v)
+	})
+}
+
+// AddCacheCreationInflateFixed adds v to the "cache_creation_inflate_fixed" field.
+func (u *GroupUpsertBulk) AddCacheCreationInflateFixed(v float64) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.AddCacheCreationInflateFixed(v)
+	})
+}
+
+// UpdateCacheCreationInflateFixed sets the "cache_creation_inflate_fixed" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateCacheCreationInflateFixed() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateCacheCreationInflateFixed()
 	})
 }
 

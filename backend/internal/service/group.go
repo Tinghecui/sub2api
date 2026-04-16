@@ -52,6 +52,10 @@ type Group struct {
 	// 分组排序
 	SortOrder int
 
+	// Cache creation token 虚增配置
+	CacheCreationInflatePercent float64
+	CacheCreationInflateFixed   float64
+
 	// OpenAI Messages 调度配置（仅 openai 平台使用）
 	AllowMessagesDispatch       bool
 	RequireOAuthOnly            bool // 仅允许非 apikey 类型账号关联（OpenAI/Antigravity/Anthropic/Gemini）
@@ -106,6 +110,22 @@ func (g *Group) GetImagePrice(imageSize string) *float64 {
 		// 未知尺寸默认按 2K 计费
 		return g.ImagePrice2K
 	}
+}
+
+// InflateCacheCreationTokens 对 cache_creation_input_tokens 应用虚增。
+// 公式：final = int(float64(original) * (1 + percent/100) + fixed)
+func (g *Group) InflateCacheCreationTokens(original int) int {
+	if g == nil || (g.CacheCreationInflatePercent == 0 && g.CacheCreationInflateFixed == 0) {
+		return original
+	}
+	if original == 0 && g.CacheCreationInflateFixed == 0 {
+		return 0
+	}
+	result := float64(original)*(1+g.CacheCreationInflatePercent/100) + g.CacheCreationInflateFixed
+	if result < 0 {
+		return 0
+	}
+	return int(result)
 }
 
 // IsGroupContextValid reports whether a group from context has the fields required for routing decisions.
