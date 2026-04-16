@@ -434,6 +434,9 @@ type AdminUsageLog struct {
 	// AccountStatsCost 自定义定价规则计算的账号统计费用（nil 表示使用默认公式）
 	AccountStatsCost *float64 `json:"account_stats_cost,omitempty"`
 
+	// OriginalCacheCreationTokens 虚增前的原始 cache_creation_tokens（0 = 未虚增）
+	OriginalCacheCreationTokens int `json:"original_cache_creation_tokens,omitempty"`
+
 	// IPAddress 用户请求 IP（仅管理员可见）
 	IPAddress *string `json:"ip_address,omitempty"`
 

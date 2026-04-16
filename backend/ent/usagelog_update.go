@@ -395,6 +395,27 @@ func (_u *UsageLogUpdate) AddCacheCreation1hTokens(v int) *UsageLogUpdate {
 	return _u
 }
 
+// SetOriginalCacheCreationTokens sets the "original_cache_creation_tokens" field.
+func (_u *UsageLogUpdate) SetOriginalCacheCreationTokens(v int) *UsageLogUpdate {
+	_u.mutation.ResetOriginalCacheCreationTokens()
+	_u.mutation.SetOriginalCacheCreationTokens(v)
+	return _u
+}
+
+// SetNillableOriginalCacheCreationTokens sets the "original_cache_creation_tokens" field if the given value is not nil.
+func (_u *UsageLogUpdate) SetNillableOriginalCacheCreationTokens(v *int) *UsageLogUpdate {
+	if v != nil {
+		_u.SetOriginalCacheCreationTokens(*v)
+	}
+	return _u
+}
+
+// AddOriginalCacheCreationTokens adds value to the "original_cache_creation_tokens" field.
+func (_u *UsageLogUpdate) AddOriginalCacheCreationTokens(v int) *UsageLogUpdate {
+	_u.mutation.AddOriginalCacheCreationTokens(v)
+	return _u
+}
+
 // SetInputCost sets the "input_cost" field.
 func (_u *UsageLogUpdate) SetInputCost(v float64) *UsageLogUpdate {
 	_u.mutation.ResetInputCost()
@@ -996,6 +1017,12 @@ func (_u *UsageLogUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedCacheCreation1hTokens(); ok {
 		_spec.AddField(usagelog.FieldCacheCreation1hTokens, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.OriginalCacheCreationTokens(); ok {
+		_spec.SetField(usagelog.FieldOriginalCacheCreationTokens, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedOriginalCacheCreationTokens(); ok {
+		_spec.AddField(usagelog.FieldOriginalCacheCreationTokens, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.InputCost(); ok {
 		_spec.SetField(usagelog.FieldInputCost, field.TypeFloat64, value)
@@ -1630,6 +1657,27 @@ func (_u *UsageLogUpdateOne) AddCacheCreation1hTokens(v int) *UsageLogUpdateOne 
 	return _u
 }
 
+// SetOriginalCacheCreationTokens sets the "original_cache_creation_tokens" field.
+func (_u *UsageLogUpdateOne) SetOriginalCacheCreationTokens(v int) *UsageLogUpdateOne {
+	_u.mutation.ResetOriginalCacheCreationTokens()
+	_u.mutation.SetOriginalCacheCreationTokens(v)
+	return _u
+}
+
+// SetNillableOriginalCacheCreationTokens sets the "original_cache_creation_tokens" field if the given value is not nil.
+func (_u *UsageLogUpdateOne) SetNillableOriginalCacheCreationTokens(v *int) *UsageLogUpdateOne {
+	if v != nil {
+		_u.SetOriginalCacheCreationTokens(*v)
+	}
+	return _u
+}
+
+// AddOriginalCacheCreationTokens adds value to the "original_cache_creation_tokens" field.
+func (_u *UsageLogUpdateOne) AddOriginalCacheCreationTokens(v int) *UsageLogUpdateOne {
+	_u.mutation.AddOriginalCacheCreationTokens(v)
+	return _u
+}
+
 // SetInputCost sets the "input_cost" field.
 func (_u *UsageLogUpdateOne) SetInputCost(v float64) *UsageLogUpdateOne {
 	_u.mutation.ResetInputCost()
@@ -2261,6 +2309,12 @@ func (_u *UsageLogUpdateOne) sqlSave(ctx context.Context) (_node *UsageLog, err 
 	}
 	if value, ok := _u.mutation.AddedCacheCreation1hTokens(); ok {
 		_spec.AddField(usagelog.FieldCacheCreation1hTokens, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.OriginalCacheCreationTokens(); ok {
+		_spec.SetField(usagelog.FieldOriginalCacheCreationTokens, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedOriginalCacheCreationTokens(); ok {
+		_spec.AddField(usagelog.FieldOriginalCacheCreationTokens, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.InputCost(); ok {
 		_spec.SetField(usagelog.FieldInputCost, field.TypeFloat64, value)

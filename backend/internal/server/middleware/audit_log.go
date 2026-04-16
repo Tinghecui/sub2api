@@ -183,12 +183,26 @@ func AuditLog(sink *service.AuditLogSink, maxCaptureMB int) gin.HandlerFunc {
 	}
 }
 
+// sensitiveHeaders 需要在审计日志中脱敏的请求头（小写匹配）
+var sensitiveHeaders = map[string]bool{
+	"authorization":   true,
+	"x-api-key":       true,
+	"x-goog-api-key":  true,
+	"cookie":          true,
+	"set-cookie":      true,
+	"proxy-authorization": true,
+}
+
 func cloneHeaders(h http.Header) map[string][]string {
 	if h == nil {
 		return nil
 	}
 	clone := make(map[string][]string, len(h))
 	for k, v := range h {
+		if sensitiveHeaders[strings.ToLower(k)] {
+			clone[k] = []string{"[REDACTED]"}
+			continue
+		}
 		vc := make([]string, len(v))
 		copy(vc, v)
 		clone[k] = vc

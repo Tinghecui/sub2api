@@ -133,6 +133,8 @@ type UsageLog struct {
 
 	CacheCreation5mTokens int `gorm:"column:cache_creation_5m_tokens"`
 	CacheCreation1hTokens int `gorm:"column:cache_creation_1h_tokens"`
+	// OriginalCacheCreationTokens 虚增前的原始值（0 = 未虚增或历史数据）
+	OriginalCacheCreationTokens int
 
 	ImageOutputTokens int
 	ImageOutputCost   float64

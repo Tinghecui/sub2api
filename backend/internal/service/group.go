@@ -113,9 +113,10 @@ func (g *Group) GetImagePrice(imageSize string) *float64 {
 }
 
 // InflateCacheCreationTokens 对 cache_creation_input_tokens 应用虚增。
+// 仅对 anthropic 平台生效，其他平台直接返回原值。
 // 公式：final = int(float64(original) * (1 + percent/100) + fixed)
 func (g *Group) InflateCacheCreationTokens(original int) int {
-	if g == nil || (g.CacheCreationInflatePercent == 0 && g.CacheCreationInflateFixed == 0) {
+	if g == nil || g.Platform != PlatformAnthropic || (g.CacheCreationInflatePercent == 0 && g.CacheCreationInflateFixed == 0) {
 		return original
 	}
 	if original == 0 && g.CacheCreationInflateFixed == 0 {

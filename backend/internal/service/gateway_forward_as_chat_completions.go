@@ -297,7 +297,11 @@ func (s *GatewayService) handleCCBufferedFromAnthropic(
 
 	// Cache creation token 虚增
 	if group := getGroupFromGinContext(c); group != nil {
-		usage.CacheCreationInputTokens = group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
+		original := usage.CacheCreationInputTokens
+		usage.CacheCreationInputTokens = group.InflateCacheCreationTokens(original)
+		if usage.CacheCreationInputTokens != original {
+			usage.OriginalCacheCreationInputTokens = original
+		}
 	}
 
 	// Update usage from accumulated delta
@@ -477,7 +481,11 @@ func (s *GatewayService) handleCCStreamingFromAnthropic(
 
 	// Cache creation token 虚增
 	if group := getGroupFromGinContext(c); group != nil {
-		usage.CacheCreationInputTokens = group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
+		original := usage.CacheCreationInputTokens
+		usage.CacheCreationInputTokens = group.InflateCacheCreationTokens(original)
+		if usage.CacheCreationInputTokens != original {
+			usage.OriginalCacheCreationInputTokens = original
+		}
 	}
 
 	return resultWithUsage(), nil

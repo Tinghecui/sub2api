@@ -629,9 +629,10 @@ func UsageLogFromServiceAdmin(l *service.UsageLog) *AdminUsageLog {
 		ChannelID:             l.ChannelID,
 		ModelMappingChain:     l.ModelMappingChain,
 		BillingTier:           l.BillingTier,
-		AccountRateMultiplier: l.AccountRateMultiplier,
-		AccountStatsCost:      l.AccountStatsCost,
-		IPAddress:             l.IPAddress,
+		AccountRateMultiplier:       l.AccountRateMultiplier,
+		AccountStatsCost:            l.AccountStatsCost,
+		OriginalCacheCreationTokens: l.OriginalCacheCreationTokens,
+		IPAddress:                   l.IPAddress,
 		Account:               AccountSummaryFromService(l.Account),
 	}
 }

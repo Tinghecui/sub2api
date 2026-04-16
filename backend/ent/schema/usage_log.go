@@ -77,6 +77,9 @@ func (UsageLog) Fields() []ent.Field {
 			Default(0),
 		field.Int("cache_creation_1h_tokens").
 			Default(0),
+		// 虚增前的原始 cache_creation_tokens（0 表示未虚增或历史数据）
+		field.Int("original_cache_creation_tokens").
+			Default(0),
 
 		// 成本字段
 		field.Float("input_cost").

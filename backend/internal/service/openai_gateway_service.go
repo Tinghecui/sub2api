@@ -207,6 +207,8 @@ type OpenAIUsage struct {
 	CacheCreationInputTokens int `json:"cache_creation_input_tokens,omitempty"`
 	CacheReadInputTokens     int `json:"cache_read_input_tokens,omitempty"`
 	ImageOutputTokens        int `json:"image_output_tokens,omitempty"`
+	// OriginalCacheCreationInputTokens 虚增前的原始值
+	OriginalCacheCreationInputTokens int `json:"-"`
 }
 
 // OpenAIForwardResult represents the result of forwarding
@@ -2959,9 +2961,8 @@ func (s *OpenAIGatewayService) handleStreamingResponsePassthrough(
 				ms := int(time.Since(startTime).Milliseconds())
 				firstTokenMs = &ms
 			}
-			s.parseSSEUsageBytes(dataBytes, usage)
-
 			// Cache creation token 虚增（OpenAI passthrough streaming）
+			// 先 inflate 再解析 usage，确保计费也用膨胀后的值
 			if group := getGroupFromGinContext(c); group != nil && (group.CacheCreationInflatePercent != 0 || group.CacheCreationInflateFixed != 0) {
 				if gjson.GetBytes(dataBytes, "usage.cache_creation_input_tokens").Exists() ||
 					gjson.GetBytes(dataBytes, "response.usage.cache_creation_input_tokens").Exists() {
@@ -2978,12 +2979,14 @@ func (s *OpenAIGatewayService) handleStreamingResponsePassthrough(
 						}
 						if modified {
 							if newData, err := json.Marshal(event); err == nil {
+								dataBytes = newData
 								line = "data: " + string(newData)
 							}
 						}
 					}
 				}
 			}
+			s.parseSSEUsageBytes(dataBytes, usage)
 		}
 
 		if !clientDisconnected {
@@ -3072,12 +3075,28 @@ func (s *OpenAIGatewayService) handleNonStreamingResponsePassthrough(
 
 	// Cache creation token 虚增（OpenAI passthrough non-streaming）
 	if group := getGroupFromGinContext(c); group != nil {
-		inflated := group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
-		if inflated != usage.CacheCreationInputTokens {
+		original := usage.CacheCreationInputTokens
+		inflated := group.InflateCacheCreationTokens(original)
+		if inflated != original {
+			usage.OriginalCacheCreationInputTokens = original
 			usage.CacheCreationInputTokens = inflated
 			if gjson.GetBytes(body, "usage.cache_creation_input_tokens").Exists() {
 				if newBody, err := sjson.SetBytes(body, "usage.cache_creation_input_tokens", inflated); err == nil {
 					body = newBody
+				}
+			}
+			// 同比例膨胀 JSON 中的 5m/1h 分桶（OpenAIUsage 无此字段，仅更新 body JSON）
+			if original > 0 {
+				ratio := float64(inflated) / float64(original)
+				if v := gjson.GetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens").Int(); v > 0 {
+					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", int(float64(v)*ratio)); err == nil {
+						body = newBody
+					}
+				}
+				if v := gjson.GetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens").Int(); v > 0 {
+					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", int(float64(v)*ratio)); err == nil {
+						body = newBody
+					}
 				}
 			}
 		}
@@ -4023,13 +4042,29 @@ func (s *OpenAIGatewayService) handleNonStreamingResponse(ctx context.Context, r
 
 	// Cache creation token 虚增
 	if group := getGroupFromGinContext(c); group != nil {
-		inflated := group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
-		if inflated != usage.CacheCreationInputTokens {
+		original := usage.CacheCreationInputTokens
+		inflated := group.InflateCacheCreationTokens(original)
+		if inflated != original {
+			usage.OriginalCacheCreationInputTokens = original
 			usage.CacheCreationInputTokens = inflated
 			// OpenAI 格式不一定有 cache_creation_input_tokens 字段，但如有则更新
 			if gjson.GetBytes(body, "usage.cache_creation_input_tokens").Exists() {
 				if newBody, err := sjson.SetBytes(body, "usage.cache_creation_input_tokens", inflated); err == nil {
 					body = newBody
+				}
+			}
+			// 同比例膨胀 JSON 中的 5m/1h 分桶
+			if original > 0 {
+				ratio := float64(inflated) / float64(original)
+				if v := gjson.GetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens").Int(); v > 0 {
+					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", int(float64(v)*ratio)); err == nil {
+						body = newBody
+					}
+				}
+				if v := gjson.GetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens").Int(); v > 0 {
+					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", int(float64(v)*ratio)); err == nil {
+						body = newBody
+					}
 				}
 			}
 		}
@@ -4599,9 +4634,10 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 		UpstreamEndpoint:    optionalTrimmedStringPtr(input.UpstreamEndpoint),
 		InputTokens:         actualInputTokens,
 		OutputTokens:        result.Usage.OutputTokens,
-		CacheCreationTokens: result.Usage.CacheCreationInputTokens,
-		CacheReadTokens:     result.Usage.CacheReadInputTokens,
-		ImageOutputTokens:   result.Usage.ImageOutputTokens,
+		CacheCreationTokens:            result.Usage.CacheCreationInputTokens,
+		CacheReadTokens:                result.Usage.CacheReadInputTokens,
+		ImageOutputTokens:              result.Usage.ImageOutputTokens,
+		OriginalCacheCreationTokens:    result.Usage.OriginalCacheCreationInputTokens,
 	}
 	if cost != nil {
 		usageLog.InputCost = cost.InputCost

@@ -484,6 +484,8 @@ type ClaudeUsage struct {
 	CacheCreation5mTokens    int // 5分钟缓存创建token（来自嵌套 cache_creation 对象）
 	CacheCreation1hTokens    int // 1小时缓存创建token（来自嵌套 cache_creation 对象）
 	ImageOutputTokens        int `json:"image_output_tokens,omitempty"`
+	// OriginalCacheCreationInputTokens 虚增前的原始值（仅在虚增发生时有意义）
+	OriginalCacheCreationInputTokens int `json:"-"`
 }
 
 // ForwardResult 转发结果
@@ -4953,9 +4955,8 @@ func (s *GatewayService) handleStreamingResponseAnthropicAPIKeyPassthrough(
 					ms := int(time.Since(startTime).Milliseconds())
 					firstTokenMs = &ms
 				}
-				s.parseSSEUsagePassthrough(data, usage)
-
 				// Cache creation token 虚增（passthrough streaming）
+				// 先 inflate 再解析 usage，确保计费也用膨胀后的值
 				if group := getGroupFromGinContext(c); group != nil && (group.CacheCreationInflatePercent != 0 || group.CacheCreationInflateFixed != 0) {
 					if gjson.Get(data, "usage.cache_creation_input_tokens").Exists() || gjson.Get(data, "message.usage.cache_creation_input_tokens").Exists() {
 						var event map[string]any
@@ -4971,12 +4972,14 @@ func (s *GatewayService) handleStreamingResponseAnthropicAPIKeyPassthrough(
 							}
 							if modified {
 								if newData, err := json.Marshal(event); err == nil {
-									line = "data: " + string(newData)
+									data = string(newData)
+									line = "data: " + data
 								}
 							}
 						}
 					}
 				}
+				s.parseSSEUsagePassthrough(data, usage)
 			} else {
 				trimmed := strings.TrimSpace(line)
 				if strings.HasPrefix(trimmed, "event:") && anthropicStreamEventIsTerminal(strings.TrimSpace(strings.TrimPrefix(trimmed, "event:")), "") {
@@ -5163,11 +5166,29 @@ func (s *GatewayService) handleNonStreamingResponseAnthropicAPIKeyPassthrough(
 
 	// Cache creation token 虚增（passthrough non-streaming）
 	if group := getGroupFromGinContext(c); group != nil {
-		inflated := group.InflateCacheCreationTokens(usage.CacheCreationInputTokens)
-		if inflated != usage.CacheCreationInputTokens {
+		original := usage.CacheCreationInputTokens
+		inflated := group.InflateCacheCreationTokens(original)
+		if inflated != original {
+			usage.OriginalCacheCreationInputTokens = original
 			usage.CacheCreationInputTokens = inflated
 			if newBody, err := sjson.SetBytes(body, "usage.cache_creation_input_tokens", inflated); err == nil {
 				body = newBody
+			}
+			// 同比例膨胀 5m/1h 分桶
+			if original > 0 {
+				ratio := float64(inflated) / float64(original)
+				if usage.CacheCreation5mTokens > 0 {
+					usage.CacheCreation5mTokens = int(float64(usage.CacheCreation5mTokens) * ratio)
+					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", usage.CacheCreation5mTokens); err == nil {
+						body = newBody
+					}
+				}
+				if usage.CacheCreation1hTokens > 0 {
+					usage.CacheCreation1hTokens = int(float64(usage.CacheCreation1hTokens) * ratio)
+					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", usage.CacheCreation1hTokens); err == nil {
+						body = newBody
+					}
+				}
 			}
 		}
 	}
@@ -7246,6 +7267,17 @@ func inflateCacheCreationJSON(usageObj map[string]any, group *Group) bool {
 		return false
 	}
 	usageObj["cache_creation_input_tokens"] = float64(inflated)
+
+	// 同时膨胀嵌套的 cache_creation 对象中的 5m/1h 分桶
+	if cc, ok := usageObj["cache_creation"].(map[string]any); ok && v > 0 {
+		ratio := float64(inflated) / float64(v)
+		if v5m, exists := parseSSEUsageInt(cc["ephemeral_5m_input_tokens"]); exists && v5m > 0 {
+			cc["ephemeral_5m_input_tokens"] = float64(int(float64(v5m) * ratio))
+		}
+		if v1h, exists := parseSSEUsageInt(cc["ephemeral_1h_input_tokens"]); exists && v1h > 0 {
+			cc["ephemeral_1h_input_tokens"] = float64(int(float64(v1h) * ratio))
+		}
+	}
 	return true
 }
 
@@ -7312,11 +7344,29 @@ func (s *GatewayService) handleNonStreamingResponse(ctx context.Context, resp *h
 
 	// Cache creation token 虚增
 	if group := getGroupFromGinContext(c); group != nil {
-		inflated := group.InflateCacheCreationTokens(response.Usage.CacheCreationInputTokens)
-		if inflated != response.Usage.CacheCreationInputTokens {
+		original := response.Usage.CacheCreationInputTokens
+		inflated := group.InflateCacheCreationTokens(original)
+		if inflated != original {
+			response.Usage.OriginalCacheCreationInputTokens = original
 			response.Usage.CacheCreationInputTokens = inflated
 			if newBody, err := sjson.SetBytes(body, "usage.cache_creation_input_tokens", inflated); err == nil {
 				body = newBody
+			}
+			// 同比例膨胀 5m/1h 分桶
+			if original > 0 {
+				ratio := float64(inflated) / float64(original)
+				if response.Usage.CacheCreation5mTokens > 0 {
+					response.Usage.CacheCreation5mTokens = int(float64(response.Usage.CacheCreation5mTokens) * ratio)
+					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", response.Usage.CacheCreation5mTokens); err == nil {
+						body = newBody
+					}
+				}
+				if response.Usage.CacheCreation1hTokens > 0 {
+					response.Usage.CacheCreation1hTokens = int(float64(response.Usage.CacheCreation1hTokens) * ratio)
+					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", response.Usage.CacheCreation1hTokens); err == nil {
+						body = newBody
+					}
+				}
 			}
 		}
 	}
@@ -8119,12 +8169,13 @@ func (s *GatewayService) buildRecordUsageLog(
 		UpstreamEndpoint:      optionalTrimmedStringPtr(input.UpstreamEndpoint),
 		InputTokens:           result.Usage.InputTokens,
 		OutputTokens:          result.Usage.OutputTokens,
-		CacheCreationTokens:   result.Usage.CacheCreationInputTokens,
-		CacheReadTokens:       result.Usage.CacheReadInputTokens,
-		CacheCreation5mTokens: result.Usage.CacheCreation5mTokens,
-		CacheCreation1hTokens: result.Usage.CacheCreation1hTokens,
-		ImageOutputTokens:     result.Usage.ImageOutputTokens,
-		RateMultiplier:        multiplier,
+		CacheCreationTokens:            result.Usage.CacheCreationInputTokens,
+		CacheReadTokens:                result.Usage.CacheReadInputTokens,
+		CacheCreation5mTokens:          result.Usage.CacheCreation5mTokens,
+		CacheCreation1hTokens:          result.Usage.CacheCreation1hTokens,
+		OriginalCacheCreationTokens:    result.Usage.OriginalCacheCreationInputTokens,
+		ImageOutputTokens:              result.Usage.ImageOutputTokens,
+		RateMultiplier:                 multiplier,
 		AccountRateMultiplier: &accountRateMultiplier,
 		BillingType:           billingType,
 		BillingMode:           resolveBillingMode(result, cost),

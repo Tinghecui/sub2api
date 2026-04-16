@@ -150,6 +150,11 @@ func CacheCreation1hTokens(v int) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldCacheCreation1hTokens, v))
 }
 
+// OriginalCacheCreationTokens applies equality check predicate on the "original_cache_creation_tokens" field. It's identical to OriginalCacheCreationTokensEQ.
+func OriginalCacheCreationTokens(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldOriginalCacheCreationTokens, v))
+}
+
 // InputCost applies equality check predicate on the "input_cost" field. It's identical to InputCostEQ.
 func InputCost(v float64) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldInputCost, v))
@@ -1153,6 +1158,46 @@ func CacheCreation1hTokensLT(v int) predicate.UsageLog {
 // CacheCreation1hTokensLTE applies the LTE predicate on the "cache_creation_1h_tokens" field.
 func CacheCreation1hTokensLTE(v int) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldLTE(FieldCacheCreation1hTokens, v))
+}
+
+// OriginalCacheCreationTokensEQ applies the EQ predicate on the "original_cache_creation_tokens" field.
+func OriginalCacheCreationTokensEQ(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldOriginalCacheCreationTokens, v))
+}
+
+// OriginalCacheCreationTokensNEQ applies the NEQ predicate on the "original_cache_creation_tokens" field.
+func OriginalCacheCreationTokensNEQ(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldOriginalCacheCreationTokens, v))
+}
+
+// OriginalCacheCreationTokensIn applies the In predicate on the "original_cache_creation_tokens" field.
+func OriginalCacheCreationTokensIn(vs ...int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIn(FieldOriginalCacheCreationTokens, vs...))
+}
+
+// OriginalCacheCreationTokensNotIn applies the NotIn predicate on the "original_cache_creation_tokens" field.
+func OriginalCacheCreationTokensNotIn(vs ...int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotIn(FieldOriginalCacheCreationTokens, vs...))
+}
+
+// OriginalCacheCreationTokensGT applies the GT predicate on the "original_cache_creation_tokens" field.
+func OriginalCacheCreationTokensGT(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGT(FieldOriginalCacheCreationTokens, v))
+}
+
+// OriginalCacheCreationTokensGTE applies the GTE predicate on the "original_cache_creation_tokens" field.
+func OriginalCacheCreationTokensGTE(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGTE(FieldOriginalCacheCreationTokens, v))
+}
+
+// OriginalCacheCreationTokensLT applies the LT predicate on the "original_cache_creation_tokens" field.
+func OriginalCacheCreationTokensLT(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLT(FieldOriginalCacheCreationTokens, v))
+}
+
+// OriginalCacheCreationTokensLTE applies the LTE predicate on the "original_cache_creation_tokens" field.
+func OriginalCacheCreationTokensLTE(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLTE(FieldOriginalCacheCreationTokens, v))
 }
 
 // InputCostEQ applies the EQ predicate on the "input_cost" field.
