@@ -1071,6 +1071,9 @@ export interface AdminUsageLog extends UsageLog {
   // 用户请求 IP（仅管理员可见）
   ip_address?: string | null
 
+  // 虚增前的原始 cache_creation_tokens（仅管理员可见）
+  original_cache_creation_tokens?: number
+
   // 最小账号信息（仅管理员接口返回）
   account?: UsageLogAccountSummary
 }
