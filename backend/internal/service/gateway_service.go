@@ -5183,10 +5183,13 @@ func (s *GatewayService) handleNonStreamingResponseAnthropicAPIKeyPassthrough(
 			if newBody, err := sjson.SetBytes(body, "usage.cache_creation_input_tokens", inflated); err == nil {
 				body = newBody
 			}
-			// 虚增增量加到 ephemeral_5m_input_tokens
-			delta := inflated - original
-			usage.CacheCreation5mTokens += delta
-			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", usage.CacheCreation5mTokens); err == nil {
+			// 虚增后将 5m 设为膨胀后的聚合值，确保计费一致
+			usage.CacheCreation5mTokens = inflated
+			usage.CacheCreation1hTokens = 0
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", inflated); err == nil {
+				body = newBody
+			}
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", 0); err == nil {
 				body = newBody
 			}
 		}
@@ -7289,15 +7292,13 @@ func inflateCacheCreationJSON(usageObj map[string]any, group *Group) bool {
 	}
 	usageObj["cache_creation_input_tokens"] = float64(inflated)
 
-	// 虚增增量默认加到 ephemeral_5m_input_tokens
-	delta := inflated - v
+	// 虚增后将 ephemeral_5m_input_tokens 设为膨胀后的聚合值，确保计费一致
 	if cc, ok := usageObj["cache_creation"].(map[string]any); ok {
-		v5m, _ := parseSSEUsageInt(cc["ephemeral_5m_input_tokens"])
-		cc["ephemeral_5m_input_tokens"] = float64(v5m + delta)
+		cc["ephemeral_5m_input_tokens"] = float64(inflated)
+		cc["ephemeral_1h_input_tokens"] = float64(0)
 	} else {
-		// cache_creation 对象不存在时创建
 		usageObj["cache_creation"] = map[string]any{
-			"ephemeral_5m_input_tokens": float64(delta),
+			"ephemeral_5m_input_tokens": float64(inflated),
 			"ephemeral_1h_input_tokens": float64(0),
 		}
 	}
@@ -7375,10 +7376,13 @@ func (s *GatewayService) handleNonStreamingResponse(ctx context.Context, resp *h
 			if newBody, err := sjson.SetBytes(body, "usage.cache_creation_input_tokens", inflated); err == nil {
 				body = newBody
 			}
-			// 虚增增量加到 ephemeral_5m_input_tokens
-			delta := inflated - original
-			response.Usage.CacheCreation5mTokens += delta
-			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", response.Usage.CacheCreation5mTokens); err == nil {
+			// 虚增后将 5m 设为膨胀后的聚合值，确保计费一致
+			response.Usage.CacheCreation5mTokens = inflated
+			response.Usage.CacheCreation1hTokens = 0
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", inflated); err == nil {
+				body = newBody
+			}
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", 0); err == nil {
 				body = newBody
 			}
 		}

@@ -3085,10 +3085,11 @@ func (s *OpenAIGatewayService) handleNonStreamingResponsePassthrough(
 					body = newBody
 				}
 			}
-			// 虚增增量加到 ephemeral_5m_input_tokens（OpenAIUsage 无此字段，仅更新 body JSON）
-			delta := inflated - original
-			v5m := int(gjson.GetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens").Int())
-			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", v5m+delta); err == nil {
+			// 虚增后将 5m 设为膨胀后的聚合值，确保计费一致（OpenAIUsage 无此字段，仅更新 body JSON）
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", inflated); err == nil {
+				body = newBody
+			}
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", 0); err == nil {
 				body = newBody
 			}
 		}
@@ -4045,10 +4046,11 @@ func (s *OpenAIGatewayService) handleNonStreamingResponse(ctx context.Context, r
 					body = newBody
 				}
 			}
-			// 虚增增量加到 ephemeral_5m_input_tokens
-			delta := inflated - original
-			v5m := int(gjson.GetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens").Int())
-			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", v5m+delta); err == nil {
+			// 虚增后将 5m 设为膨胀后的聚合值，确保计费一致
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", inflated); err == nil {
+				body = newBody
+			}
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", 0); err == nil {
 				body = newBody
 			}
 		}
