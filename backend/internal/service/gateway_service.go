@@ -5183,21 +5183,11 @@ func (s *GatewayService) handleNonStreamingResponseAnthropicAPIKeyPassthrough(
 			if newBody, err := sjson.SetBytes(body, "usage.cache_creation_input_tokens", inflated); err == nil {
 				body = newBody
 			}
-			// 同比例膨胀 5m/1h 分桶
-			if original > 0 {
-				ratio := float64(inflated) / float64(original)
-				if usage.CacheCreation5mTokens > 0 {
-					usage.CacheCreation5mTokens = int(float64(usage.CacheCreation5mTokens) * ratio)
-					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", usage.CacheCreation5mTokens); err == nil {
-						body = newBody
-					}
-				}
-				if usage.CacheCreation1hTokens > 0 {
-					usage.CacheCreation1hTokens = int(float64(usage.CacheCreation1hTokens) * ratio)
-					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", usage.CacheCreation1hTokens); err == nil {
-						body = newBody
-					}
-				}
+			// 虚增增量加到 ephemeral_5m_input_tokens
+			delta := inflated - original
+			usage.CacheCreation5mTokens += delta
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", usage.CacheCreation5mTokens); err == nil {
+				body = newBody
 			}
 		}
 	}
@@ -7299,14 +7289,16 @@ func inflateCacheCreationJSON(usageObj map[string]any, group *Group) bool {
 	}
 	usageObj["cache_creation_input_tokens"] = float64(inflated)
 
-	// 同时膨胀嵌套的 cache_creation 对象中的 5m/1h 分桶
-	if cc, ok := usageObj["cache_creation"].(map[string]any); ok && v > 0 {
-		ratio := float64(inflated) / float64(v)
-		if v5m, exists := parseSSEUsageInt(cc["ephemeral_5m_input_tokens"]); exists && v5m > 0 {
-			cc["ephemeral_5m_input_tokens"] = float64(int(float64(v5m) * ratio))
-		}
-		if v1h, exists := parseSSEUsageInt(cc["ephemeral_1h_input_tokens"]); exists && v1h > 0 {
-			cc["ephemeral_1h_input_tokens"] = float64(int(float64(v1h) * ratio))
+	// 虚增增量默认加到 ephemeral_5m_input_tokens
+	delta := inflated - v
+	if cc, ok := usageObj["cache_creation"].(map[string]any); ok {
+		v5m, _ := parseSSEUsageInt(cc["ephemeral_5m_input_tokens"])
+		cc["ephemeral_5m_input_tokens"] = float64(v5m + delta)
+	} else {
+		// cache_creation 对象不存在时创建
+		usageObj["cache_creation"] = map[string]any{
+			"ephemeral_5m_input_tokens": float64(delta),
+			"ephemeral_1h_input_tokens": float64(0),
 		}
 	}
 	return true
@@ -7383,21 +7375,11 @@ func (s *GatewayService) handleNonStreamingResponse(ctx context.Context, resp *h
 			if newBody, err := sjson.SetBytes(body, "usage.cache_creation_input_tokens", inflated); err == nil {
 				body = newBody
 			}
-			// 同比例膨胀 5m/1h 分桶
-			if original > 0 {
-				ratio := float64(inflated) / float64(original)
-				if response.Usage.CacheCreation5mTokens > 0 {
-					response.Usage.CacheCreation5mTokens = int(float64(response.Usage.CacheCreation5mTokens) * ratio)
-					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", response.Usage.CacheCreation5mTokens); err == nil {
-						body = newBody
-					}
-				}
-				if response.Usage.CacheCreation1hTokens > 0 {
-					response.Usage.CacheCreation1hTokens = int(float64(response.Usage.CacheCreation1hTokens) * ratio)
-					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", response.Usage.CacheCreation1hTokens); err == nil {
-						body = newBody
-					}
-				}
+			// 虚增增量加到 ephemeral_5m_input_tokens
+			delta := inflated - original
+			response.Usage.CacheCreation5mTokens += delta
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", response.Usage.CacheCreation5mTokens); err == nil {
+				body = newBody
 			}
 		}
 	}

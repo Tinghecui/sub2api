@@ -3085,19 +3085,11 @@ func (s *OpenAIGatewayService) handleNonStreamingResponsePassthrough(
 					body = newBody
 				}
 			}
-			// 同比例膨胀 JSON 中的 5m/1h 分桶（OpenAIUsage 无此字段，仅更新 body JSON）
-			if original > 0 {
-				ratio := float64(inflated) / float64(original)
-				if v := gjson.GetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens").Int(); v > 0 {
-					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", int(float64(v)*ratio)); err == nil {
-						body = newBody
-					}
-				}
-				if v := gjson.GetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens").Int(); v > 0 {
-					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", int(float64(v)*ratio)); err == nil {
-						body = newBody
-					}
-				}
+			// 虚增增量加到 ephemeral_5m_input_tokens（OpenAIUsage 无此字段，仅更新 body JSON）
+			delta := inflated - original
+			v5m := int(gjson.GetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens").Int())
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", v5m+delta); err == nil {
+				body = newBody
 			}
 		}
 	}
@@ -4053,19 +4045,11 @@ func (s *OpenAIGatewayService) handleNonStreamingResponse(ctx context.Context, r
 					body = newBody
 				}
 			}
-			// 同比例膨胀 JSON 中的 5m/1h 分桶
-			if original > 0 {
-				ratio := float64(inflated) / float64(original)
-				if v := gjson.GetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens").Int(); v > 0 {
-					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", int(float64(v)*ratio)); err == nil {
-						body = newBody
-					}
-				}
-				if v := gjson.GetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens").Int(); v > 0 {
-					if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_1h_input_tokens", int(float64(v)*ratio)); err == nil {
-						body = newBody
-					}
-				}
+			// 虚增增量加到 ephemeral_5m_input_tokens
+			delta := inflated - original
+			v5m := int(gjson.GetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens").Int())
+			if newBody, err := sjson.SetBytes(body, "usage.cache_creation.ephemeral_5m_input_tokens", v5m+delta); err == nil {
+				body = newBody
 			}
 		}
 	}
