@@ -109,3 +109,58 @@ Request → Gin Middleware (JWT/API Key auth, rate limiting, CORS, logging)
 - `pnpm-lock.yaml` synced (if `package.json` changed)
 - Ent generated code committed (if schema changed)
 - All test stubs updated (if interfaces changed)
+
+## Current Work Scope
+
+当前讨论范围只关注 **Anthropic 平台** 的 group（`platform = "anthropic"`）。OpenAI / Gemini 等其他平台暂不在改动范围内。
+
+## Hard-Won Lessons (踩坑记录)
+
+### 1. Ent Select 字段陷阱
+`GetByKeyForAuth` (`backend/internal/repository/api_key_repo.go`) 使用显式 `.Select(...)` 优化性能。**新增 Group 字段必须手动加入这个 Select 列表**，否则 auth cache snapshot 中该字段静默为零值。`GetByID` / `GetByIDLite` 不受影响（无 Select 限制）。
+
+教训来源：cache inflate 功能上线后流式路径完全不生效，花了多轮部署和 debug 日志才定位。
+
+### 2. 计费走 5m/1h 分桶而非聚合值
+`billing_service.go` 的 `computeCacheCreationCost()` 在 `SupportsCacheBreakdown=true` 时（LiteLLM 动态定价自动启用），用 `ephemeral_5m_tokens + ephemeral_1h_tokens` 计费，**不用** `cache_creation_input_tokens` 聚合值。
+
+因此，任何修改 cache_creation 的逻辑都必须**同步修改 5m/1h 分桶**。当前 inflate 策略：`ephemeral_5m = inflated_aggregate`, `ephemeral_1h = 0`。
+
+### 3. Auth Cache 层级
+L1 内存（15s） → L2 Redis（5min） → DB 回源。Snapshot 有 `apiKeyAuthSnapshotVersion` 版本号（当前 v6），版本不匹配自动回源。修改 Group/APIKey 后如果需要立即生效，重启 Redis + sub2api。
+
+### 4. 计费与日志分离
+`applyUsageBilling()` 原子事务先扣费 → `writeUsageLogBestEffort()` 异步写日志。日志写入失败**不影响扣费**。usage_logs INSERT 使用显式 47+ 列 raw SQL（非 ORM），新增列需要同步修改 `prepareUsageLogInsert()`。
+
+### 5. Group 软删除与 Fallback 引用
+Groups 使用 `SoftDeleteMixin`。删除 group 后，其他 group 的 `fallback_group_id` 引用不会自动清除。前端编辑保存时会带着失效的引用，导致 `validateFallbackGroup` 返回 404。
+
+## Production Server (64.186.230.163)
+
+- **Service:** systemd `sub2api.service`, user `sub2api`
+- **Binary:** `/opt/sub2api/sub2api`
+- **Config:** `/opt/sub2api/config.yaml`
+- **DB:** PostgreSQL localhost:5432, user=sub2api, db=sub2api
+- **Redis:** localhost:6379, no password
+- **Audit Log:** Cloudflare R2 bucket `sub2api-audit-logs`
+
+### 部署流程
+```bash
+# 1. 本地编译（需要先 pnpm build 前端）
+cd frontend && npx pnpm run build
+cd backend && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags embed -o ../sub2api-linux ./cmd/server/
+
+# 2. 上传（不替换旧的）
+scp sub2api-linux root@64.186.230.163:/opt/sub2api/sub2api.new
+
+# 3. DB migration（零停机，先于二进制切换）
+ssh root@64.186.230.163 "PGPASSWORD='Sub2api@2026' psql -h localhost -U sub2api -d sub2api < migration.sql"
+
+# 4. 切换 + 重启（~2s 停机）
+ssh root@64.186.230.163 "cd /opt/sub2api && chown sub2api:sub2api sub2api.new && chmod +x sub2api.new && mv sub2api sub2api.old && mv sub2api.new sub2api && systemctl restart sub2api"
+```
+
+### 回滚
+```bash
+ssh root@64.186.230.163 "cd /opt/sub2api && mv sub2api sub2api.new && mv sub2api.old sub2api && cp config.yaml.bak config.yaml && systemctl restart sub2api"
+```
