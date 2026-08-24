@@ -41,9 +41,10 @@ type CreateAPIKeyRequest struct {
 	ExpiresInDays *int     `json:"expires_in_days"` // 过期天数
 
 	// Rate limit fields (0 = unlimited)
-	RateLimit5h *float64 `json:"rate_limit_5h"`
-	RateLimit1d *float64 `json:"rate_limit_1d"`
-	RateLimit7d *float64 `json:"rate_limit_7d"`
+	RateLimit5h  *float64 `json:"rate_limit_5h"`
+	RateLimit1d  *float64 `json:"rate_limit_1d"`
+	RateLimit7d  *float64 `json:"rate_limit_7d"`
+	RateLimit30d *float64 `json:"rate_limit_30d"`
 }
 
 // UpdateAPIKeyRequest represents the update API key request payload
@@ -61,6 +62,7 @@ type UpdateAPIKeyRequest struct {
 	RateLimit5h         *float64 `json:"rate_limit_5h"`
 	RateLimit1d         *float64 `json:"rate_limit_1d"`
 	RateLimit7d         *float64 `json:"rate_limit_7d"`
+	RateLimit30d        *float64 `json:"rate_limit_30d"`
 	ResetRateLimitUsage *bool    `json:"reset_rate_limit_usage"` // 重置限速用量
 }
 
@@ -78,6 +80,9 @@ func validateAPIKeyCreateRequest(req CreateAPIKeyRequest) error {
 	}
 	if req.RateLimit7d != nil && !validAPIKeyLimit(*req.RateLimit7d) {
 		return errors.New("invalid rate_limit_7d")
+	}
+	if req.RateLimit30d != nil && !validAPIKeyLimit(*req.RateLimit30d) {
+		return errors.New("invalid rate_limit_30d")
 	}
 	if req.ExpiresInDays != nil && *req.ExpiresInDays <= 0 {
 		return errors.New("invalid expires_in_days")
@@ -97,6 +102,9 @@ func validateAPIKeyUpdateRequest(req UpdateAPIKeyRequest) error {
 	}
 	if req.RateLimit7d != nil && !validAPIKeyLimit(*req.RateLimit7d) {
 		return errors.New("invalid rate_limit_7d")
+	}
+	if req.RateLimit30d != nil && !validAPIKeyLimit(*req.RateLimit30d) {
+		return errors.New("invalid rate_limit_30d")
 	}
 	return nil
 }
@@ -216,6 +224,9 @@ func (h *APIKeyHandler) Create(c *gin.Context) {
 	if req.RateLimit7d != nil {
 		svcReq.RateLimit7d = *req.RateLimit7d
 	}
+	if req.RateLimit30d != nil {
+		svcReq.RateLimit30d = *req.RateLimit30d
+	}
 
 	executeUserIdempotentJSON(c, "user.api_keys.create", req, service.DefaultWriteIdempotencyTTL(), func(ctx context.Context) (any, error) {
 		key, err := h.apiKeyService.Create(ctx, subject.UserID, svcReq)
@@ -259,6 +270,7 @@ func (h *APIKeyHandler) Update(c *gin.Context) {
 		RateLimit5h:         req.RateLimit5h,
 		RateLimit1d:         req.RateLimit1d,
 		RateLimit7d:         req.RateLimit7d,
+		RateLimit30d:        req.RateLimit30d,
 		ResetRateLimitUsage: req.ResetRateLimitUsage,
 	}
 	if req.Name != "" {

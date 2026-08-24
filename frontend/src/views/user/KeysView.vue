@@ -230,7 +230,7 @@
           </template>
 
           <template #cell-rate_limit="{ row }">
-            <div v-if="row.rate_limit_5h > 0 || row.rate_limit_1d > 0 || row.rate_limit_7d > 0" class="space-y-1.5 min-w-[140px]">
+            <div v-if="row.rate_limit_5h > 0 || row.rate_limit_1d > 0 || row.rate_limit_7d > 0 || row.rate_limit_30d > 0" class="space-y-1.5 min-w-[140px]">
               <!-- 5h window -->
               <div v-if="row.rate_limit_5h > 0">
                 <div class="flex items-center justify-between text-xs">
@@ -315,9 +315,37 @@
                   ⟳ {{ formatResetTime(row.reset_7d_at) }}
                 </div>
               </div>
+              <!-- 30d window -->
+              <div v-if="row.rate_limit_30d > 0">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-gray-500 dark:text-gray-400">30d</span>
+                  <span :class="[
+                    'font-medium tabular-nums',
+                    row.usage_30d >= row.rate_limit_30d ? 'text-red-500' :
+                    row.usage_30d >= row.rate_limit_30d * 0.8 ? 'text-yellow-500' :
+                    'text-gray-700 dark:text-gray-300'
+                  ]">
+                    ${{ row.usage_30d?.toFixed(2) || '0.00' }}/${{ row.rate_limit_30d?.toFixed(2) }}
+                  </span>
+                </div>
+                <div class="h-1 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-dark-600">
+                  <div
+                    :class="[
+                      'h-full rounded-full transition-all',
+                      row.usage_30d >= row.rate_limit_30d ? 'bg-red-500' :
+                      row.usage_30d >= row.rate_limit_30d * 0.8 ? 'bg-yellow-500' :
+                      'bg-emerald-500'
+                    ]"
+                    :style="{ width: Math.min((row.usage_30d / row.rate_limit_30d) * 100, 100) + '%' }"
+                  />
+                </div>
+                <div v-if="row.reset_30d_at && formatResetTime(row.reset_30d_at)" class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
+                  ⟳ {{ formatResetTime(row.reset_30d_at) }}
+                </div>
+              </div>
               <!-- Reset button -->
               <button
-                v-if="row.usage_5h > 0 || row.usage_1d > 0 || row.usage_7d > 0"
+                v-if="row.usage_5h > 0 || row.usage_1d > 0 || row.usage_7d > 0 || row.usage_30d > 0"
                 @click.stop="confirmResetRateLimitFromTable(row)"
                 class="mt-0.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
                 :title="t('keys.resetRateLimitUsage')"
@@ -822,8 +850,54 @@
               </div>
             </div>
 
+            <!-- 30-Day Limit -->
+            <div>
+              <label class="input-label">{{ t('keys.rateLimit30d') }}</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <input
+                  v-model.number="formData.rate_limit_30d"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  class="input pl-7"
+                  :placeholder="'0'"
+                />
+              </div>
+              <!-- Usage info (edit mode only) -->
+              <div v-if="showEditModal && selectedKey && selectedKey.rate_limit_30d > 0" class="mt-2">
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 rounded-lg bg-gray-100 px-3 py-2 dark:bg-dark-700 text-sm">
+                    <span :class="[
+                      'font-medium',
+                      selectedKey.usage_30d >= selectedKey.rate_limit_30d ? 'text-red-500' :
+                      selectedKey.usage_30d >= selectedKey.rate_limit_30d * 0.8 ? 'text-yellow-500' :
+                      'text-gray-900 dark:text-white'
+                    ]">
+                      ${{ selectedKey.usage_30d?.toFixed(4) || '0.0000' }}
+                    </span>
+                    <span class="mx-2 text-gray-400">/</span>
+                    <span class="text-gray-500 dark:text-gray-400">
+                      ${{ selectedKey.rate_limit_30d?.toFixed(2) || '0.00' }}
+                    </span>
+                  </div>
+                </div>
+                <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-dark-600">
+                  <div
+                    :class="[
+                      'h-full rounded-full transition-all',
+                      selectedKey.usage_30d >= selectedKey.rate_limit_30d ? 'bg-red-500' :
+                      selectedKey.usage_30d >= selectedKey.rate_limit_30d * 0.8 ? 'bg-yellow-500' :
+                      'bg-green-500'
+                    ]"
+                    :style="{ width: Math.min((selectedKey.usage_30d / selectedKey.rate_limit_30d) * 100, 100) + '%' }"
+                  />
+                </div>
+              </div>
+            </div>
+
             <!-- Reset Rate Limit button (edit mode only) -->
-            <div v-if="showEditModal && selectedKey && (selectedKey.rate_limit_5h > 0 || selectedKey.rate_limit_1d > 0 || selectedKey.rate_limit_7d > 0)">
+            <div v-if="showEditModal && selectedKey && (selectedKey.rate_limit_5h > 0 || selectedKey.rate_limit_1d > 0 || selectedKey.rate_limit_7d > 0 || selectedKey.rate_limit_30d > 0)">
               <button
                 type="button"
                 @click="confirmResetRateLimit"
@@ -1344,6 +1418,7 @@ const formData = ref({
   rate_limit_5h: null as number | null,
   rate_limit_1d: null as number | null,
   rate_limit_7d: null as number | null,
+  rate_limit_30d: null as number | null,
   enable_expiration: false,
   expiration_preset: '30' as '7' | '30' | '90' | 'custom',
   expiration_date: ''
@@ -1572,10 +1647,11 @@ const editKey = (key: ApiKey) => {
     ip_blacklist: (key.ip_blacklist || []).join('\n'),
     enable_quota: key.quota > 0,
     quota: key.quota > 0 ? key.quota : null,
-    enable_rate_limit: (key.rate_limit_5h > 0) || (key.rate_limit_1d > 0) || (key.rate_limit_7d > 0),
+    enable_rate_limit: (key.rate_limit_5h > 0) || (key.rate_limit_1d > 0) || (key.rate_limit_7d > 0) || (key.rate_limit_30d > 0),
     rate_limit_5h: key.rate_limit_5h || null,
     rate_limit_1d: key.rate_limit_1d || null,
     rate_limit_7d: key.rate_limit_7d || null,
+    rate_limit_30d: key.rate_limit_30d || null,
     enable_expiration: hasExpiration,
     expiration_preset: 'custom',
     expiration_date: key.expires_at ? formatDateTimeLocal(key.expires_at) : ''
@@ -1713,7 +1789,8 @@ const handleSubmit = async () => {
     rate_limit_5h: formData.value.rate_limit_5h && formData.value.rate_limit_5h > 0 ? formData.value.rate_limit_5h : 0,
     rate_limit_1d: formData.value.rate_limit_1d && formData.value.rate_limit_1d > 0 ? formData.value.rate_limit_1d : 0,
     rate_limit_7d: formData.value.rate_limit_7d && formData.value.rate_limit_7d > 0 ? formData.value.rate_limit_7d : 0,
-  } : { rate_limit_5h: 0, rate_limit_1d: 0, rate_limit_7d: 0 }
+    rate_limit_30d: formData.value.rate_limit_30d && formData.value.rate_limit_30d > 0 ? formData.value.rate_limit_30d : 0,
+  } : { rate_limit_5h: 0, rate_limit_1d: 0, rate_limit_7d: 0, rate_limit_30d: 0 }
 
   submitting.value = true
   try {
@@ -1728,6 +1805,7 @@ const handleSubmit = async () => {
         rate_limit_5h: rateLimitData.rate_limit_5h,
         rate_limit_1d: rateLimitData.rate_limit_1d,
         rate_limit_7d: rateLimitData.rate_limit_7d,
+        rate_limit_30d: rateLimitData.rate_limit_30d,
       }
       if (shouldSubmitEditStatus(selectedKey.value, formData.value.status)) {
         updates.status = formData.value.status
@@ -1802,6 +1880,7 @@ const closeModals = () => {
     rate_limit_5h: null,
     rate_limit_1d: null,
     rate_limit_7d: null,
+    rate_limit_30d: null,
     enable_expiration: false,
     expiration_preset: '30',
     expiration_date: ''

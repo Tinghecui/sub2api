@@ -223,6 +223,20 @@ func (_c *APIKeyCreate) SetNillableRateLimit7d(v *float64) *APIKeyCreate {
 	return _c
 }
 
+// SetRateLimit30d sets the "rate_limit_30d" field.
+func (_c *APIKeyCreate) SetRateLimit30d(v float64) *APIKeyCreate {
+	_c.mutation.SetRateLimit30d(v)
+	return _c
+}
+
+// SetNillableRateLimit30d sets the "rate_limit_30d" field if the given value is not nil.
+func (_c *APIKeyCreate) SetNillableRateLimit30d(v *float64) *APIKeyCreate {
+	if v != nil {
+		_c.SetRateLimit30d(*v)
+	}
+	return _c
+}
+
 // SetUsage5h sets the "usage_5h" field.
 func (_c *APIKeyCreate) SetUsage5h(v float64) *APIKeyCreate {
 	_c.mutation.SetUsage5h(v)
@@ -265,6 +279,20 @@ func (_c *APIKeyCreate) SetNillableUsage7d(v *float64) *APIKeyCreate {
 	return _c
 }
 
+// SetUsage30d sets the "usage_30d" field.
+func (_c *APIKeyCreate) SetUsage30d(v float64) *APIKeyCreate {
+	_c.mutation.SetUsage30d(v)
+	return _c
+}
+
+// SetNillableUsage30d sets the "usage_30d" field if the given value is not nil.
+func (_c *APIKeyCreate) SetNillableUsage30d(v *float64) *APIKeyCreate {
+	if v != nil {
+		_c.SetUsage30d(*v)
+	}
+	return _c
+}
+
 // SetWindow5hStart sets the "window_5h_start" field.
 func (_c *APIKeyCreate) SetWindow5hStart(v time.Time) *APIKeyCreate {
 	_c.mutation.SetWindow5hStart(v)
@@ -303,6 +331,20 @@ func (_c *APIKeyCreate) SetWindow7dStart(v time.Time) *APIKeyCreate {
 func (_c *APIKeyCreate) SetNillableWindow7dStart(v *time.Time) *APIKeyCreate {
 	if v != nil {
 		_c.SetWindow7dStart(*v)
+	}
+	return _c
+}
+
+// SetWindow30dStart sets the "window_30d_start" field.
+func (_c *APIKeyCreate) SetWindow30dStart(v time.Time) *APIKeyCreate {
+	_c.mutation.SetWindow30dStart(v)
+	return _c
+}
+
+// SetNillableWindow30dStart sets the "window_30d_start" field if the given value is not nil.
+func (_c *APIKeyCreate) SetNillableWindow30dStart(v *time.Time) *APIKeyCreate {
+	if v != nil {
+		_c.SetWindow30dStart(*v)
 	}
 	return _c
 }
@@ -407,6 +449,10 @@ func (_c *APIKeyCreate) defaults() error {
 		v := apikey.DefaultRateLimit7d
 		_c.mutation.SetRateLimit7d(v)
 	}
+	if _, ok := _c.mutation.RateLimit30d(); !ok {
+		v := apikey.DefaultRateLimit30d
+		_c.mutation.SetRateLimit30d(v)
+	}
 	if _, ok := _c.mutation.Usage5h(); !ok {
 		v := apikey.DefaultUsage5h
 		_c.mutation.SetUsage5h(v)
@@ -418,6 +464,10 @@ func (_c *APIKeyCreate) defaults() error {
 	if _, ok := _c.mutation.Usage7d(); !ok {
 		v := apikey.DefaultUsage7d
 		_c.mutation.SetUsage7d(v)
+	}
+	if _, ok := _c.mutation.Usage30d(); !ok {
+		v := apikey.DefaultUsage30d
+		_c.mutation.SetUsage30d(v)
 	}
 	return nil
 }
@@ -472,6 +522,9 @@ func (_c *APIKeyCreate) check() error {
 	if _, ok := _c.mutation.RateLimit7d(); !ok {
 		return &ValidationError{Name: "rate_limit_7d", err: errors.New(`ent: missing required field "APIKey.rate_limit_7d"`)}
 	}
+	if _, ok := _c.mutation.RateLimit30d(); !ok {
+		return &ValidationError{Name: "rate_limit_30d", err: errors.New(`ent: missing required field "APIKey.rate_limit_30d"`)}
+	}
 	if _, ok := _c.mutation.Usage5h(); !ok {
 		return &ValidationError{Name: "usage_5h", err: errors.New(`ent: missing required field "APIKey.usage_5h"`)}
 	}
@@ -480,6 +533,9 @@ func (_c *APIKeyCreate) check() error {
 	}
 	if _, ok := _c.mutation.Usage7d(); !ok {
 		return &ValidationError{Name: "usage_7d", err: errors.New(`ent: missing required field "APIKey.usage_7d"`)}
+	}
+	if _, ok := _c.mutation.Usage30d(); !ok {
+		return &ValidationError{Name: "usage_30d", err: errors.New(`ent: missing required field "APIKey.usage_30d"`)}
 	}
 	if len(_c.mutation.UserIDs()) == 0 {
 		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "APIKey.user"`)}
@@ -571,6 +627,10 @@ func (_c *APIKeyCreate) createSpec() (*APIKey, *sqlgraph.CreateSpec) {
 		_spec.SetField(apikey.FieldRateLimit7d, field.TypeFloat64, value)
 		_node.RateLimit7d = value
 	}
+	if value, ok := _c.mutation.RateLimit30d(); ok {
+		_spec.SetField(apikey.FieldRateLimit30d, field.TypeFloat64, value)
+		_node.RateLimit30d = value
+	}
 	if value, ok := _c.mutation.Usage5h(); ok {
 		_spec.SetField(apikey.FieldUsage5h, field.TypeFloat64, value)
 		_node.Usage5h = value
@@ -583,6 +643,10 @@ func (_c *APIKeyCreate) createSpec() (*APIKey, *sqlgraph.CreateSpec) {
 		_spec.SetField(apikey.FieldUsage7d, field.TypeFloat64, value)
 		_node.Usage7d = value
 	}
+	if value, ok := _c.mutation.Usage30d(); ok {
+		_spec.SetField(apikey.FieldUsage30d, field.TypeFloat64, value)
+		_node.Usage30d = value
+	}
 	if value, ok := _c.mutation.Window5hStart(); ok {
 		_spec.SetField(apikey.FieldWindow5hStart, field.TypeTime, value)
 		_node.Window5hStart = &value
@@ -594,6 +658,10 @@ func (_c *APIKeyCreate) createSpec() (*APIKey, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Window7dStart(); ok {
 		_spec.SetField(apikey.FieldWindow7dStart, field.TypeTime, value)
 		_node.Window7dStart = &value
+	}
+	if value, ok := _c.mutation.Window30dStart(); ok {
+		_spec.SetField(apikey.FieldWindow30dStart, field.TypeTime, value)
+		_node.Window30dStart = &value
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -955,6 +1023,24 @@ func (u *APIKeyUpsert) AddRateLimit7d(v float64) *APIKeyUpsert {
 	return u
 }
 
+// SetRateLimit30d sets the "rate_limit_30d" field.
+func (u *APIKeyUpsert) SetRateLimit30d(v float64) *APIKeyUpsert {
+	u.Set(apikey.FieldRateLimit30d, v)
+	return u
+}
+
+// UpdateRateLimit30d sets the "rate_limit_30d" field to the value that was provided on create.
+func (u *APIKeyUpsert) UpdateRateLimit30d() *APIKeyUpsert {
+	u.SetExcluded(apikey.FieldRateLimit30d)
+	return u
+}
+
+// AddRateLimit30d adds v to the "rate_limit_30d" field.
+func (u *APIKeyUpsert) AddRateLimit30d(v float64) *APIKeyUpsert {
+	u.Add(apikey.FieldRateLimit30d, v)
+	return u
+}
+
 // SetUsage5h sets the "usage_5h" field.
 func (u *APIKeyUpsert) SetUsage5h(v float64) *APIKeyUpsert {
 	u.Set(apikey.FieldUsage5h, v)
@@ -1009,6 +1095,24 @@ func (u *APIKeyUpsert) AddUsage7d(v float64) *APIKeyUpsert {
 	return u
 }
 
+// SetUsage30d sets the "usage_30d" field.
+func (u *APIKeyUpsert) SetUsage30d(v float64) *APIKeyUpsert {
+	u.Set(apikey.FieldUsage30d, v)
+	return u
+}
+
+// UpdateUsage30d sets the "usage_30d" field to the value that was provided on create.
+func (u *APIKeyUpsert) UpdateUsage30d() *APIKeyUpsert {
+	u.SetExcluded(apikey.FieldUsage30d)
+	return u
+}
+
+// AddUsage30d adds v to the "usage_30d" field.
+func (u *APIKeyUpsert) AddUsage30d(v float64) *APIKeyUpsert {
+	u.Add(apikey.FieldUsage30d, v)
+	return u
+}
+
 // SetWindow5hStart sets the "window_5h_start" field.
 func (u *APIKeyUpsert) SetWindow5hStart(v time.Time) *APIKeyUpsert {
 	u.Set(apikey.FieldWindow5hStart, v)
@@ -1060,6 +1164,24 @@ func (u *APIKeyUpsert) UpdateWindow7dStart() *APIKeyUpsert {
 // ClearWindow7dStart clears the value of the "window_7d_start" field.
 func (u *APIKeyUpsert) ClearWindow7dStart() *APIKeyUpsert {
 	u.SetNull(apikey.FieldWindow7dStart)
+	return u
+}
+
+// SetWindow30dStart sets the "window_30d_start" field.
+func (u *APIKeyUpsert) SetWindow30dStart(v time.Time) *APIKeyUpsert {
+	u.Set(apikey.FieldWindow30dStart, v)
+	return u
+}
+
+// UpdateWindow30dStart sets the "window_30d_start" field to the value that was provided on create.
+func (u *APIKeyUpsert) UpdateWindow30dStart() *APIKeyUpsert {
+	u.SetExcluded(apikey.FieldWindow30dStart)
+	return u
+}
+
+// ClearWindow30dStart clears the value of the "window_30d_start" field.
+func (u *APIKeyUpsert) ClearWindow30dStart() *APIKeyUpsert {
+	u.SetNull(apikey.FieldWindow30dStart)
 	return u
 }
 
@@ -1409,6 +1531,27 @@ func (u *APIKeyUpsertOne) UpdateRateLimit7d() *APIKeyUpsertOne {
 	})
 }
 
+// SetRateLimit30d sets the "rate_limit_30d" field.
+func (u *APIKeyUpsertOne) SetRateLimit30d(v float64) *APIKeyUpsertOne {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.SetRateLimit30d(v)
+	})
+}
+
+// AddRateLimit30d adds v to the "rate_limit_30d" field.
+func (u *APIKeyUpsertOne) AddRateLimit30d(v float64) *APIKeyUpsertOne {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.AddRateLimit30d(v)
+	})
+}
+
+// UpdateRateLimit30d sets the "rate_limit_30d" field to the value that was provided on create.
+func (u *APIKeyUpsertOne) UpdateRateLimit30d() *APIKeyUpsertOne {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.UpdateRateLimit30d()
+	})
+}
+
 // SetUsage5h sets the "usage_5h" field.
 func (u *APIKeyUpsertOne) SetUsage5h(v float64) *APIKeyUpsertOne {
 	return u.Update(func(s *APIKeyUpsert) {
@@ -1472,6 +1615,27 @@ func (u *APIKeyUpsertOne) UpdateUsage7d() *APIKeyUpsertOne {
 	})
 }
 
+// SetUsage30d sets the "usage_30d" field.
+func (u *APIKeyUpsertOne) SetUsage30d(v float64) *APIKeyUpsertOne {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.SetUsage30d(v)
+	})
+}
+
+// AddUsage30d adds v to the "usage_30d" field.
+func (u *APIKeyUpsertOne) AddUsage30d(v float64) *APIKeyUpsertOne {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.AddUsage30d(v)
+	})
+}
+
+// UpdateUsage30d sets the "usage_30d" field to the value that was provided on create.
+func (u *APIKeyUpsertOne) UpdateUsage30d() *APIKeyUpsertOne {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.UpdateUsage30d()
+	})
+}
+
 // SetWindow5hStart sets the "window_5h_start" field.
 func (u *APIKeyUpsertOne) SetWindow5hStart(v time.Time) *APIKeyUpsertOne {
 	return u.Update(func(s *APIKeyUpsert) {
@@ -1532,6 +1696,27 @@ func (u *APIKeyUpsertOne) UpdateWindow7dStart() *APIKeyUpsertOne {
 func (u *APIKeyUpsertOne) ClearWindow7dStart() *APIKeyUpsertOne {
 	return u.Update(func(s *APIKeyUpsert) {
 		s.ClearWindow7dStart()
+	})
+}
+
+// SetWindow30dStart sets the "window_30d_start" field.
+func (u *APIKeyUpsertOne) SetWindow30dStart(v time.Time) *APIKeyUpsertOne {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.SetWindow30dStart(v)
+	})
+}
+
+// UpdateWindow30dStart sets the "window_30d_start" field to the value that was provided on create.
+func (u *APIKeyUpsertOne) UpdateWindow30dStart() *APIKeyUpsertOne {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.UpdateWindow30dStart()
+	})
+}
+
+// ClearWindow30dStart clears the value of the "window_30d_start" field.
+func (u *APIKeyUpsertOne) ClearWindow30dStart() *APIKeyUpsertOne {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.ClearWindow30dStart()
 	})
 }
 
@@ -2047,6 +2232,27 @@ func (u *APIKeyUpsertBulk) UpdateRateLimit7d() *APIKeyUpsertBulk {
 	})
 }
 
+// SetRateLimit30d sets the "rate_limit_30d" field.
+func (u *APIKeyUpsertBulk) SetRateLimit30d(v float64) *APIKeyUpsertBulk {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.SetRateLimit30d(v)
+	})
+}
+
+// AddRateLimit30d adds v to the "rate_limit_30d" field.
+func (u *APIKeyUpsertBulk) AddRateLimit30d(v float64) *APIKeyUpsertBulk {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.AddRateLimit30d(v)
+	})
+}
+
+// UpdateRateLimit30d sets the "rate_limit_30d" field to the value that was provided on create.
+func (u *APIKeyUpsertBulk) UpdateRateLimit30d() *APIKeyUpsertBulk {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.UpdateRateLimit30d()
+	})
+}
+
 // SetUsage5h sets the "usage_5h" field.
 func (u *APIKeyUpsertBulk) SetUsage5h(v float64) *APIKeyUpsertBulk {
 	return u.Update(func(s *APIKeyUpsert) {
@@ -2110,6 +2316,27 @@ func (u *APIKeyUpsertBulk) UpdateUsage7d() *APIKeyUpsertBulk {
 	})
 }
 
+// SetUsage30d sets the "usage_30d" field.
+func (u *APIKeyUpsertBulk) SetUsage30d(v float64) *APIKeyUpsertBulk {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.SetUsage30d(v)
+	})
+}
+
+// AddUsage30d adds v to the "usage_30d" field.
+func (u *APIKeyUpsertBulk) AddUsage30d(v float64) *APIKeyUpsertBulk {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.AddUsage30d(v)
+	})
+}
+
+// UpdateUsage30d sets the "usage_30d" field to the value that was provided on create.
+func (u *APIKeyUpsertBulk) UpdateUsage30d() *APIKeyUpsertBulk {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.UpdateUsage30d()
+	})
+}
+
 // SetWindow5hStart sets the "window_5h_start" field.
 func (u *APIKeyUpsertBulk) SetWindow5hStart(v time.Time) *APIKeyUpsertBulk {
 	return u.Update(func(s *APIKeyUpsert) {
@@ -2170,6 +2397,27 @@ func (u *APIKeyUpsertBulk) UpdateWindow7dStart() *APIKeyUpsertBulk {
 func (u *APIKeyUpsertBulk) ClearWindow7dStart() *APIKeyUpsertBulk {
 	return u.Update(func(s *APIKeyUpsert) {
 		s.ClearWindow7dStart()
+	})
+}
+
+// SetWindow30dStart sets the "window_30d_start" field.
+func (u *APIKeyUpsertBulk) SetWindow30dStart(v time.Time) *APIKeyUpsertBulk {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.SetWindow30dStart(v)
+	})
+}
+
+// UpdateWindow30dStart sets the "window_30d_start" field to the value that was provided on create.
+func (u *APIKeyUpsertBulk) UpdateWindow30dStart() *APIKeyUpsertBulk {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.UpdateWindow30dStart()
+	})
+}
+
+// ClearWindow30dStart clears the value of the "window_30d_start" field.
+func (u *APIKeyUpsertBulk) ClearWindow30dStart() *APIKeyUpsertBulk {
+	return u.Update(func(s *APIKeyUpsert) {
+		s.ClearWindow30dStart()
 	})
 }
 

@@ -38,9 +38,10 @@ var (
 	ErrAPIKeyQuotaExhausted = infraerrors.TooManyRequests("API_KEY_QUOTA_EXHAUSTED", "api key 额度已用完")
 
 	// Rate limit errors
-	ErrAPIKeyRateLimit5hExceeded = infraerrors.TooManyRequests("API_KEY_RATE_5H_EXCEEDED", "api key 5小时限额已用完")
-	ErrAPIKeyRateLimit1dExceeded = infraerrors.TooManyRequests("API_KEY_RATE_1D_EXCEEDED", "api key 日限额已用完")
-	ErrAPIKeyRateLimit7dExceeded = infraerrors.TooManyRequests("API_KEY_RATE_7D_EXCEEDED", "api key 7天限额已用完")
+	ErrAPIKeyRateLimit5hExceeded  = infraerrors.TooManyRequests("API_KEY_RATE_5H_EXCEEDED", "api key 5小时限额已用完")
+	ErrAPIKeyRateLimit1dExceeded  = infraerrors.TooManyRequests("API_KEY_RATE_1D_EXCEEDED", "api key 日限额已用完")
+	ErrAPIKeyRateLimit7dExceeded  = infraerrors.TooManyRequests("API_KEY_RATE_7D_EXCEEDED", "api key 7天限额已用完")
+	ErrAPIKeyRateLimit30dExceeded = infraerrors.TooManyRequests("API_KEY_RATE_30D_EXCEEDED", "api key 30天限额已用完")
 )
 
 const (
@@ -57,7 +58,7 @@ const (
 // APIKeyUpdateFields 声明 APIKeyRepository.Update 允许写回的列。
 //
 // 与 UserUpdateFields 同理：api_keys 的用量列由计费热路径原子递增
-// （IncrementQuotaUsed / IncrementRateLimitUsage 的 quota_used、usage_5h/1d/7d），
+// （IncrementQuotaUsed / IncrementRateLimitUsage 的 quota_used、usage_5h/1d/7d/30d），
 // 若编辑 Key 时无条件整行回写，并发累计的配额与限流计数就会被旧快照覆盖。
 // 因此调用方必须显式声明要改的列。
 type APIKeyUpdateFields struct {
@@ -68,9 +69,9 @@ type APIKeyUpdateFields struct {
 	ExpiresAt bool
 	// QuotaUsed 仅供"重置配额用量"路径声明；常规计费走 IncrementQuotaUsed。
 	QuotaUsed bool
-	// RateLimits 覆盖 rate_limit_5h / _1d / _7d 三个阈值。
+	// RateLimits 覆盖 rate_limit_5h / _1d / _7d / _30d 四个阈值。
 	RateLimits bool
-	// RateLimitUsage 覆盖 usage_5h/_1d/_7d 与三个窗口起点，
+	// RateLimitUsage 覆盖 usage_5h/_1d/_7d/_30d 与四个窗口起点，
 	// 仅供"重置限流用量"路径声明；常规计费走 IncrementRateLimitUsage。
 	RateLimitUsage bool
 	// IPRules 覆盖 ip_whitelist 与 ip_blacklist。
@@ -127,12 +128,14 @@ type apiKeyAllByUserIDLister interface {
 
 // APIKeyRateLimitData holds rate limit usage and window state for an API key.
 type APIKeyRateLimitData struct {
-	Usage5h       float64
-	Usage1d       float64
-	Usage7d       float64
-	Window5hStart *time.Time
-	Window1dStart *time.Time
-	Window7dStart *time.Time
+	Usage5h        float64
+	Usage1d        float64
+	Usage7d        float64
+	Usage30d       float64
+	Window5hStart  *time.Time
+	Window1dStart  *time.Time
+	Window7dStart  *time.Time
+	Window30dStart *time.Time
 }
 
 // EffectiveUsage5h returns the 5h window usage, or 0 if the window has expired.
@@ -157,6 +160,14 @@ func (d *APIKeyRateLimitData) EffectiveUsage7d() float64 {
 		return 0
 	}
 	return d.Usage7d
+}
+
+// EffectiveUsage30d returns the 30d window usage, or 0 if the window has expired.
+func (d *APIKeyRateLimitData) EffectiveUsage30d() float64 {
+	if IsWindowExpired(d.Window30dStart, RateLimitWindow30d) {
+		return 0
+	}
+	return d.Usage30d
 }
 
 // APIKeyQuotaUsageState captures the latest quota fields after an atomic quota update.
@@ -220,9 +231,10 @@ type CreateAPIKeyRequest struct {
 	ExpiresInDays *int    `json:"expires_in_days"` // Days until expiry (nil = never expires)
 
 	// Rate limit fields (0 = unlimited)
-	RateLimit5h float64 `json:"rate_limit_5h"`
-	RateLimit1d float64 `json:"rate_limit_1d"`
-	RateLimit7d float64 `json:"rate_limit_7d"`
+	RateLimit5h  float64 `json:"rate_limit_5h"`
+	RateLimit1d  float64 `json:"rate_limit_1d"`
+	RateLimit7d  float64 `json:"rate_limit_7d"`
+	RateLimit30d float64 `json:"rate_limit_30d"`
 }
 
 // UpdateAPIKeyRequest 更新API Key请求
@@ -243,6 +255,7 @@ type UpdateAPIKeyRequest struct {
 	RateLimit5h         *float64 `json:"rate_limit_5h"`
 	RateLimit1d         *float64 `json:"rate_limit_1d"`
 	RateLimit7d         *float64 `json:"rate_limit_7d"`
+	RateLimit30d        *float64 `json:"rate_limit_30d"`
 	ResetRateLimitUsage *bool    `json:"reset_rate_limit_usage"` // Reset all usage counters to 0
 }
 
@@ -254,7 +267,7 @@ func validateAPIKeyLimit(v float64) error {
 }
 
 func validateCreateAPIKeyRequest(req CreateAPIKeyRequest) error {
-	for _, v := range []float64{req.Quota, req.RateLimit5h, req.RateLimit1d, req.RateLimit7d} {
+	for _, v := range []float64{req.Quota, req.RateLimit5h, req.RateLimit1d, req.RateLimit7d, req.RateLimit30d} {
 		if err := validateAPIKeyLimit(v); err != nil {
 			return err
 		}
@@ -266,7 +279,7 @@ func validateCreateAPIKeyRequest(req CreateAPIKeyRequest) error {
 }
 
 func validateUpdateAPIKeyRequest(req UpdateAPIKeyRequest) error {
-	for _, v := range []*float64{req.Quota, req.RateLimit5h, req.RateLimit1d, req.RateLimit7d} {
+	for _, v := range []*float64{req.Quota, req.RateLimit5h, req.RateLimit1d, req.RateLimit7d, req.RateLimit30d} {
 		if v != nil {
 			if err := validateAPIKeyLimit(*v); err != nil {
 				return err
@@ -532,18 +545,19 @@ func (s *APIKeyService) Create(ctx context.Context, userID int64, req CreateAPIK
 
 	// 创建API Key记录
 	apiKey := &APIKey{
-		UserID:      userID,
-		Key:         key,
-		Name:        html.EscapeString(req.Name),
-		GroupID:     req.GroupID,
-		Status:      StatusActive,
-		IPWhitelist: req.IPWhitelist,
-		IPBlacklist: req.IPBlacklist,
-		Quota:       req.Quota,
-		QuotaUsed:   0,
-		RateLimit5h: req.RateLimit5h,
-		RateLimit1d: req.RateLimit1d,
-		RateLimit7d: req.RateLimit7d,
+		UserID:       userID,
+		Key:          key,
+		Name:         html.EscapeString(req.Name),
+		GroupID:      req.GroupID,
+		Status:       StatusActive,
+		IPWhitelist:  req.IPWhitelist,
+		IPBlacklist:  req.IPBlacklist,
+		Quota:        req.Quota,
+		QuotaUsed:    0,
+		RateLimit5h:  req.RateLimit5h,
+		RateLimit1d:  req.RateLimit1d,
+		RateLimit7d:  req.RateLimit7d,
+		RateLimit30d: req.RateLimit30d,
 	}
 
 	// Set expiration time if specified
@@ -882,14 +896,20 @@ func (s *APIKeyService) Update(ctx context.Context, id int64, userID int64, req 
 		apiKey.RateLimit7d = *req.RateLimit7d
 		fields.RateLimits = true
 	}
+	if req.RateLimit30d != nil {
+		apiKey.RateLimit30d = *req.RateLimit30d
+		fields.RateLimits = true
+	}
 	resetRateLimit := req.ResetRateLimitUsage != nil && *req.ResetRateLimitUsage
 	if resetRateLimit {
 		apiKey.Usage5h = 0
 		apiKey.Usage1d = 0
 		apiKey.Usage7d = 0
+		apiKey.Usage30d = 0
 		apiKey.Window5hStart = nil
 		apiKey.Window1dStart = nil
 		apiKey.Window7dStart = nil
+		apiKey.Window30dStart = nil
 		fields.RateLimitUsage = true
 	}
 

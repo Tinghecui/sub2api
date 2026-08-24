@@ -721,15 +721,19 @@ export interface ApiKey {
   rate_limit_5h: number
   rate_limit_1d: number
   rate_limit_7d: number
+  rate_limit_30d: number
   usage_5h: number
   usage_1d: number
   usage_7d: number
+  usage_30d: number
   window_5h_start: string | null
   window_1d_start: string | null
   window_7d_start: string | null
+  window_30d_start: string | null
   reset_5h_at: string | null
   reset_1d_at: string | null
   reset_7d_at: string | null
+  reset_30d_at: string | null
 }
 
 export interface CreateApiKeyRequest {
@@ -743,6 +747,7 @@ export interface CreateApiKeyRequest {
   rate_limit_5h?: number
   rate_limit_1d?: number
   rate_limit_7d?: number
+  rate_limit_30d?: number
 }
 
 export interface UpdateApiKeyRequest {
@@ -757,6 +762,7 @@ export interface UpdateApiKeyRequest {
   rate_limit_5h?: number
   rate_limit_1d?: number
   rate_limit_7d?: number
+  rate_limit_30d?: number
   reset_rate_limit_usage?: boolean
 }
 

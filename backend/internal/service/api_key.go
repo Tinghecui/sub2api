@@ -16,9 +16,10 @@ const (
 
 // Rate limit window durations
 const (
-	RateLimitWindow5h = 5 * time.Hour
-	RateLimitWindow1d = 24 * time.Hour
-	RateLimitWindow7d = 7 * 24 * time.Hour
+	RateLimitWindow5h  = 5 * time.Hour
+	RateLimitWindow1d  = 24 * time.Hour
+	RateLimitWindow7d  = 7 * 24 * time.Hour
+	RateLimitWindow30d = 30 * 24 * time.Hour
 )
 
 // IsWindowExpired returns true if the window starting at windowStart has exceeded the given duration.
@@ -53,15 +54,18 @@ type APIKey struct {
 	ExpiresAt *time.Time // Expiration time (nil = never expires)
 
 	// Rate limit fields
-	RateLimit5h   float64    // Rate limit in USD per 5h (0 = unlimited)
-	RateLimit1d   float64    // Rate limit in USD per 1d (0 = unlimited)
-	RateLimit7d   float64    // Rate limit in USD per 7d (0 = unlimited)
-	Usage5h       float64    // Used amount in current 5h window
-	Usage1d       float64    // Used amount in current 1d window
-	Usage7d       float64    // Used amount in current 7d window
-	Window5hStart *time.Time // Start of current 5h window
-	Window1dStart *time.Time // Start of current 1d window
-	Window7dStart *time.Time // Start of current 7d window
+	RateLimit5h    float64    // Rate limit in USD per 5h (0 = unlimited)
+	RateLimit1d    float64    // Rate limit in USD per 1d (0 = unlimited)
+	RateLimit7d    float64    // Rate limit in USD per 7d (0 = unlimited)
+	RateLimit30d   float64    // Rate limit in USD per 30d (0 = unlimited)
+	Usage5h        float64    // Used amount in current 5h window
+	Usage1d        float64    // Used amount in current 1d window
+	Usage7d        float64    // Used amount in current 7d window
+	Usage30d       float64    // Used amount in current 30d window
+	Window5hStart  *time.Time // Start of current 5h window
+	Window1dStart  *time.Time // Start of current 1d window
+	Window7dStart  *time.Time // Start of current 7d window
+	Window30dStart *time.Time // Start of current 30d window
 }
 
 func (k *APIKey) IsActive() bool {
@@ -70,7 +74,7 @@ func (k *APIKey) IsActive() bool {
 
 // HasRateLimits returns true if any rate limit window is configured
 func (k *APIKey) HasRateLimits() bool {
-	return k.RateLimit5h > 0 || k.RateLimit1d > 0 || k.RateLimit7d > 0
+	return k.RateLimit5h > 0 || k.RateLimit1d > 0 || k.RateLimit7d > 0 || k.RateLimit30d > 0
 }
 
 // IsExpired checks if the API key has expired
@@ -135,6 +139,14 @@ func (k *APIKey) EffectiveUsage7d() float64 {
 		return 0
 	}
 	return k.Usage7d
+}
+
+// EffectiveUsage30d returns the 30d window usage, or 0 if the window has expired.
+func (k *APIKey) EffectiveUsage30d() float64 {
+	if IsWindowExpired(k.Window30dStart, RateLimitWindow30d) {
+		return 0
+	}
+	return k.Usage30d
 }
 
 // APIKeyListFilters holds optional filtering parameters for listing API keys.

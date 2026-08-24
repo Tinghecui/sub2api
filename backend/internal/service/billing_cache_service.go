@@ -582,8 +582,8 @@ func (s *BillingCacheService) checkAPIKeyRateLimits(ctx context.Context, apiKey 
 		if err != nil {
 			return nil // Don't block requests on DB errors
 		}
-		return s.evaluateRateLimits(ctx, apiKey, data.Usage5h, data.Usage1d, data.Usage7d,
-			data.Window5hStart, data.Window1dStart, data.Window7dStart)
+		return s.evaluateRateLimits(ctx, apiKey, data.Usage5h, data.Usage1d, data.Usage7d, data.Usage30d,
+			data.Window5hStart, data.Window1dStart, data.Window7dStart, data.Window30dStart)
 	}
 
 	cacheData, err := s.cache.GetAPIKeyRateLimit(ctx, apiKey.ID)
@@ -598,9 +598,10 @@ func (s *BillingCacheService) checkAPIKeyRateLimits(ctx context.Context, apiKey 
 		}
 		// Build cache entry from DB data
 		cacheEntry := &APIKeyRateLimitCacheData{
-			Usage5h: dbData.Usage5h,
-			Usage1d: dbData.Usage1d,
-			Usage7d: dbData.Usage7d,
+			Usage5h:  dbData.Usage5h,
+			Usage1d:  dbData.Usage1d,
+			Usage7d:  dbData.Usage7d,
+			Usage30d: dbData.Usage30d,
 		}
 		if dbData.Window5hStart != nil {
 			cacheEntry.Window5h = dbData.Window5hStart.Unix()
@@ -611,11 +612,14 @@ func (s *BillingCacheService) checkAPIKeyRateLimits(ctx context.Context, apiKey 
 		if dbData.Window7dStart != nil {
 			cacheEntry.Window7d = dbData.Window7dStart.Unix()
 		}
+		if dbData.Window30dStart != nil {
+			cacheEntry.Window30d = dbData.Window30dStart.Unix()
+		}
 		_ = s.cache.SetAPIKeyRateLimit(ctx, apiKey.ID, cacheEntry)
 		cacheData = cacheEntry
 	}
 
-	var w5h, w1d, w7d *time.Time
+	var w5h, w1d, w7d, w30d *time.Time
 	if cacheData.Window5h > 0 {
 		t := time.Unix(cacheData.Window5h, 0)
 		w5h = &t
@@ -628,11 +632,15 @@ func (s *BillingCacheService) checkAPIKeyRateLimits(ctx context.Context, apiKey 
 		t := time.Unix(cacheData.Window7d, 0)
 		w7d = &t
 	}
-	return s.evaluateRateLimits(ctx, apiKey, cacheData.Usage5h, cacheData.Usage1d, cacheData.Usage7d, w5h, w1d, w7d)
+	if cacheData.Window30d > 0 {
+		t := time.Unix(cacheData.Window30d, 0)
+		w30d = &t
+	}
+	return s.evaluateRateLimits(ctx, apiKey, cacheData.Usage5h, cacheData.Usage1d, cacheData.Usage7d, cacheData.Usage30d, w5h, w1d, w7d, w30d)
 }
 
 // evaluateRateLimits checks usage against limits, triggering async resets for expired windows.
-func (s *BillingCacheService) evaluateRateLimits(ctx context.Context, apiKey *APIKey, usage5h, usage1d, usage7d float64, w5h, w1d, w7d *time.Time) error {
+func (s *BillingCacheService) evaluateRateLimits(ctx context.Context, apiKey *APIKey, usage5h, usage1d, usage7d, usage30d float64, w5h, w1d, w7d, w30d *time.Time) error {
 	needsReset := false
 
 	// Reset expired windows in-memory for check purposes
@@ -646,6 +654,10 @@ func (s *BillingCacheService) evaluateRateLimits(ctx context.Context, apiKey *AP
 	}
 	if IsWindowExpired(w7d, RateLimitWindow7d) {
 		usage7d = 0
+		needsReset = true
+	}
+	if IsWindowExpired(w30d, RateLimitWindow30d) {
+		usage30d = 0
 		needsReset = true
 	}
 
@@ -683,6 +695,9 @@ func (s *BillingCacheService) evaluateRateLimits(ctx context.Context, apiKey *AP
 	}
 	if apiKey.RateLimit7d > 0 && usage7d >= apiKey.RateLimit7d {
 		return ErrAPIKeyRateLimit7dExceeded
+	}
+	if apiKey.RateLimit30d > 0 && usage30d >= apiKey.RateLimit30d {
+		return ErrAPIKeyRateLimit30dExceeded
 	}
 	return nil
 }

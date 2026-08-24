@@ -240,6 +240,7 @@ export default {
     rateLimit5h: '5小时限额 (USD)',
     rateLimit1d: '日限额 (USD)',
     rateLimit7d: '7天限额 (USD)',
+    rateLimit30d: '30天限额 (USD)',
     rateLimitHint: '设置此密钥在指定时间窗口内的最大消费额。0 = 无限制。',
     rateLimitUsage: '速率限制用量',
     resetRateLimitUsage: '重置速率限制用量',

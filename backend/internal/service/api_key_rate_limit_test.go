@@ -78,81 +78,97 @@ func TestAPIKey_EffectiveUsage(t *testing.T) {
 	now := time.Now()
 
 	tests := []struct {
-		name   string
-		key    APIKey
-		want5h float64
-		want1d float64
-		want7d float64
+		name    string
+		key     APIKey
+		want5h  float64
+		want1d  float64
+		want7d  float64
+		want30d float64
 	}{
 		{
 			name: "all windows active",
 			key: APIKey{
-				Usage5h:       5.0,
-				Usage1d:       10.0,
-				Usage7d:       50.0,
-				Window5hStart: rateLimitTimePtr(now.Add(-1 * time.Hour)),
-				Window1dStart: rateLimitTimePtr(now.Add(-12 * time.Hour)),
-				Window7dStart: rateLimitTimePtr(now.Add(-3 * 24 * time.Hour)),
+				Usage5h:        5.0,
+				Usage1d:        10.0,
+				Usage7d:        50.0,
+				Usage30d:       200.0,
+				Window5hStart:  rateLimitTimePtr(now.Add(-1 * time.Hour)),
+				Window1dStart:  rateLimitTimePtr(now.Add(-12 * time.Hour)),
+				Window7dStart:  rateLimitTimePtr(now.Add(-3 * 24 * time.Hour)),
+				Window30dStart: rateLimitTimePtr(now.Add(-10 * 24 * time.Hour)),
 			},
-			want5h: 5.0,
-			want1d: 10.0,
-			want7d: 50.0,
+			want5h:  5.0,
+			want1d:  10.0,
+			want7d:  50.0,
+			want30d: 200.0,
 		},
 		{
 			name: "all windows expired",
 			key: APIKey{
-				Usage5h:       5.0,
-				Usage1d:       10.0,
-				Usage7d:       50.0,
-				Window5hStart: rateLimitTimePtr(now.Add(-6 * time.Hour)),
-				Window1dStart: rateLimitTimePtr(now.Add(-25 * time.Hour)),
-				Window7dStart: rateLimitTimePtr(now.Add(-8 * 24 * time.Hour)),
+				Usage5h:        5.0,
+				Usage1d:        10.0,
+				Usage7d:        50.0,
+				Usage30d:       200.0,
+				Window5hStart:  rateLimitTimePtr(now.Add(-6 * time.Hour)),
+				Window1dStart:  rateLimitTimePtr(now.Add(-25 * time.Hour)),
+				Window7dStart:  rateLimitTimePtr(now.Add(-8 * 24 * time.Hour)),
+				Window30dStart: rateLimitTimePtr(now.Add(-31 * 24 * time.Hour)),
 			},
-			want5h: 0,
-			want1d: 0,
-			want7d: 0,
+			want5h:  0,
+			want1d:  0,
+			want7d:  0,
+			want30d: 0,
 		},
 		{
 			name: "nil window starts return 0 (stale usage reset)",
 			key: APIKey{
-				Usage5h:       5.0,
-				Usage1d:       10.0,
-				Usage7d:       50.0,
-				Window5hStart: nil,
-				Window1dStart: nil,
-				Window7dStart: nil,
+				Usage5h:        5.0,
+				Usage1d:        10.0,
+				Usage7d:        50.0,
+				Usage30d:       200.0,
+				Window5hStart:  nil,
+				Window1dStart:  nil,
+				Window7dStart:  nil,
+				Window30dStart: nil,
 			},
-			want5h: 0,
-			want1d: 0,
-			want7d: 0,
+			want5h:  0,
+			want1d:  0,
+			want7d:  0,
+			want30d: 0,
 		},
 		{
 			name: "mixed: 5h expired, 1d active, 7d nil",
 			key: APIKey{
-				Usage5h:       5.0,
-				Usage1d:       10.0,
-				Usage7d:       50.0,
-				Window5hStart: rateLimitTimePtr(now.Add(-6 * time.Hour)),
-				Window1dStart: rateLimitTimePtr(now.Add(-12 * time.Hour)),
-				Window7dStart: nil,
+				Usage5h:        5.0,
+				Usage1d:        10.0,
+				Usage7d:        50.0,
+				Usage30d:       200.0,
+				Window5hStart:  rateLimitTimePtr(now.Add(-6 * time.Hour)),
+				Window1dStart:  rateLimitTimePtr(now.Add(-12 * time.Hour)),
+				Window7dStart:  nil,
+				Window30dStart: rateLimitTimePtr(now.Add(-10 * 24 * time.Hour)),
 			},
-			want5h: 0,
-			want1d: 10.0,
-			want7d: 0,
+			want5h:  0,
+			want1d:  10.0,
+			want7d:  0,
+			want30d: 200.0,
 		},
 		{
 			name: "zero usage with active windows",
 			key: APIKey{
-				Usage5h:       0,
-				Usage1d:       0,
-				Usage7d:       0,
-				Window5hStart: rateLimitTimePtr(now.Add(-1 * time.Hour)),
-				Window1dStart: rateLimitTimePtr(now.Add(-1 * time.Hour)),
-				Window7dStart: rateLimitTimePtr(now.Add(-1 * time.Hour)),
+				Usage5h:        0,
+				Usage1d:        0,
+				Usage7d:        0,
+				Usage30d:       0,
+				Window5hStart:  rateLimitTimePtr(now.Add(-1 * time.Hour)),
+				Window1dStart:  rateLimitTimePtr(now.Add(-1 * time.Hour)),
+				Window7dStart:  rateLimitTimePtr(now.Add(-1 * time.Hour)),
+				Window30dStart: rateLimitTimePtr(now.Add(-1 * time.Hour)),
 			},
-			want5h: 0,
-			want1d: 0,
-			want7d: 0,
+			want5h:  0,
+			want1d:  0,
+			want7d:  0,
+			want30d: 0,
 		},
 	}
 
@@ -167,6 +183,9 @@ func TestAPIKey_EffectiveUsage(t *testing.T) {
 			if got := tt.key.EffectiveUsage7d(); got != tt.want7d {
 				t.Errorf("EffectiveUsage7d() = %v, want %v", got, tt.want7d)
 			}
+			if got := tt.key.EffectiveUsage30d(); got != tt.want30d {
+				t.Errorf("EffectiveUsage30d() = %v, want %v", got, tt.want30d)
+			}
 		})
 	}
 }
@@ -175,53 +194,63 @@ func TestAPIKeyRateLimitData_EffectiveUsage(t *testing.T) {
 	now := time.Now()
 
 	tests := []struct {
-		name   string
-		data   APIKeyRateLimitData
-		want5h float64
-		want1d float64
-		want7d float64
+		name    string
+		data    APIKeyRateLimitData
+		want5h  float64
+		want1d  float64
+		want7d  float64
+		want30d float64
 	}{
 		{
 			name: "all windows active",
 			data: APIKeyRateLimitData{
-				Usage5h:       3.0,
-				Usage1d:       8.0,
-				Usage7d:       40.0,
-				Window5hStart: rateLimitTimePtr(now.Add(-2 * time.Hour)),
-				Window1dStart: rateLimitTimePtr(now.Add(-10 * time.Hour)),
-				Window7dStart: rateLimitTimePtr(now.Add(-2 * 24 * time.Hour)),
+				Usage5h:        3.0,
+				Usage1d:        8.0,
+				Usage7d:        40.0,
+				Usage30d:       160.0,
+				Window5hStart:  rateLimitTimePtr(now.Add(-2 * time.Hour)),
+				Window1dStart:  rateLimitTimePtr(now.Add(-10 * time.Hour)),
+				Window7dStart:  rateLimitTimePtr(now.Add(-2 * 24 * time.Hour)),
+				Window30dStart: rateLimitTimePtr(now.Add(-5 * 24 * time.Hour)),
 			},
-			want5h: 3.0,
-			want1d: 8.0,
-			want7d: 40.0,
+			want5h:  3.0,
+			want1d:  8.0,
+			want7d:  40.0,
+			want30d: 160.0,
 		},
 		{
 			name: "all windows expired",
 			data: APIKeyRateLimitData{
-				Usage5h:       3.0,
-				Usage1d:       8.0,
-				Usage7d:       40.0,
-				Window5hStart: rateLimitTimePtr(now.Add(-10 * time.Hour)),
-				Window1dStart: rateLimitTimePtr(now.Add(-48 * time.Hour)),
-				Window7dStart: rateLimitTimePtr(now.Add(-10 * 24 * time.Hour)),
+				Usage5h:        3.0,
+				Usage1d:        8.0,
+				Usage7d:        40.0,
+				Usage30d:       160.0,
+				Window5hStart:  rateLimitTimePtr(now.Add(-10 * time.Hour)),
+				Window1dStart:  rateLimitTimePtr(now.Add(-48 * time.Hour)),
+				Window7dStart:  rateLimitTimePtr(now.Add(-10 * 24 * time.Hour)),
+				Window30dStart: rateLimitTimePtr(now.Add(-31 * 24 * time.Hour)),
 			},
-			want5h: 0,
-			want1d: 0,
-			want7d: 0,
+			want5h:  0,
+			want1d:  0,
+			want7d:  0,
+			want30d: 0,
 		},
 		{
 			name: "nil window starts return 0 (stale usage reset)",
 			data: APIKeyRateLimitData{
-				Usage5h:       3.0,
-				Usage1d:       8.0,
-				Usage7d:       40.0,
-				Window5hStart: nil,
-				Window1dStart: nil,
-				Window7dStart: nil,
+				Usage5h:        3.0,
+				Usage1d:        8.0,
+				Usage7d:        40.0,
+				Usage30d:       160.0,
+				Window5hStart:  nil,
+				Window1dStart:  nil,
+				Window7dStart:  nil,
+				Window30dStart: nil,
 			},
-			want5h: 0,
-			want1d: 0,
-			want7d: 0,
+			want5h:  0,
+			want1d:  0,
+			want7d:  0,
+			want30d: 0,
 		},
 	}
 
@@ -235,6 +264,9 @@ func TestAPIKeyRateLimitData_EffectiveUsage(t *testing.T) {
 			}
 			if got := tt.data.EffectiveUsage7d(); got != tt.want7d {
 				t.Errorf("EffectiveUsage7d() = %v, want %v", got, tt.want7d)
+			}
+			if got := tt.data.EffectiveUsage30d(); got != tt.want30d {
+				t.Errorf("EffectiveUsage30d() = %v, want %v", got, tt.want30d)
 			}
 		})
 	}

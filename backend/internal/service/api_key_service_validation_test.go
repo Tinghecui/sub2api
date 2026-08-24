@@ -24,6 +24,7 @@ func TestValidateCreateAPIKeyRequestNumericLimits(t *testing.T) {
 		{RateLimit5h: -1},
 		{RateLimit1d: math.NaN()},
 		{RateLimit7d: math.Inf(-1)},
+		{RateLimit30d: -1},
 		{ExpiresInDays: &invalidExpiry},
 	}
 	for _, req := range tests {
@@ -40,6 +41,7 @@ func TestValidateUpdateAPIKeyRequestNumericLimits(t *testing.T) {
 		{RateLimit5h: &nan},
 		{RateLimit1d: &inf},
 		{RateLimit7d: &negative},
+		{RateLimit30d: &nan},
 	} {
 		require.Error(t, validateUpdateAPIKeyRequest(req))
 	}

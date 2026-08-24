@@ -15,12 +15,14 @@ import (
 
 // APIKeyRateLimitCacheData holds rate limit usage data cached in Redis.
 type APIKeyRateLimitCacheData struct {
-	Usage5h  float64 `json:"usage_5h"`
-	Usage1d  float64 `json:"usage_1d"`
-	Usage7d  float64 `json:"usage_7d"`
-	Window5h int64   `json:"window_5h"` // unix timestamp, 0 = not started
-	Window1d int64   `json:"window_1d"`
-	Window7d int64   `json:"window_7d"`
+	Usage5h   float64 `json:"usage_5h"`
+	Usage1d   float64 `json:"usage_1d"`
+	Usage7d   float64 `json:"usage_7d"`
+	Usage30d  float64 `json:"usage_30d"`
+	Window5h  int64   `json:"window_5h"` // unix timestamp, 0 = not started
+	Window1d  int64   `json:"window_1d"`
+	Window7d  int64   `json:"window_7d"`
+	Window30d int64   `json:"window_30d"`
 }
 
 // UserPlatformQuotaKey 标识一个 user×platform，用于脏集出入与批量读。

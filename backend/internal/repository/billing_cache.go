@@ -21,12 +21,13 @@ const (
 	subCacheInvalidateChannel = "subscription:cache:invalidate"
 	billingCacheTTL           = 5 * time.Minute
 	billingCacheJitter        = 30 * time.Second
-	rateLimitCacheTTL         = 7 * 24 * time.Hour // 7 days matches the longest window
+	rateLimitCacheTTL         = 30 * 24 * time.Hour // 30 days matches the longest window
 
 	// Rate limit window durations — must match service.RateLimitWindow* constants.
-	rateLimitWindow5h = 5 * time.Hour
-	rateLimitWindow1d = 24 * time.Hour
-	rateLimitWindow7d = 7 * 24 * time.Hour
+	rateLimitWindow5h  = 5 * time.Hour
+	rateLimitWindow1d  = 24 * time.Hour
+	rateLimitWindow7d  = 7 * 24 * time.Hour
+	rateLimitWindow30d = 30 * 24 * time.Hour
 )
 
 // jitteredTTL 返回带随机抖动的 TTL，防止缓存雪崩
@@ -64,12 +65,14 @@ func billingRateLimitKey(keyID int64) string {
 }
 
 const (
-	rateLimitFieldUsage5h  = "usage_5h"
-	rateLimitFieldUsage1d  = "usage_1d"
-	rateLimitFieldUsage7d  = "usage_7d"
-	rateLimitFieldWindow5h = "window_5h"
-	rateLimitFieldWindow1d = "window_1d"
-	rateLimitFieldWindow7d = "window_7d"
+	rateLimitFieldUsage5h   = "usage_5h"
+	rateLimitFieldUsage1d   = "usage_1d"
+	rateLimitFieldUsage7d   = "usage_7d"
+	rateLimitFieldUsage30d  = "usage_30d"
+	rateLimitFieldWindow5h  = "window_5h"
+	rateLimitFieldWindow1d  = "window_1d"
+	rateLimitFieldWindow7d  = "window_7d"
+	rateLimitFieldWindow30d = "window_30d"
 )
 
 var (
@@ -97,12 +100,12 @@ var (
 		return 1
 	`)
 
-	// updateRateLimitUsageScript atomically increments all three rate limit usage counters
+	// updateRateLimitUsageScript atomically increments all four rate limit usage counters
 	// with window expiration checking. If a window has expired, its usage is reset to cost
 	// (instead of accumulated) and the window timestamp is updated, matching the DB-side
 	// IncrementRateLimitUsage semantics.
 	//
-	// ARGV: [1]=cost, [2]=ttl_seconds, [3]=now_unix, [4]=window_5h_seconds, [5]=window_1d_seconds, [6]=window_7d_seconds
+	// ARGV: [1]=cost, [2]=ttl_seconds, [3]=now_unix, [4]=window_5h_seconds, [5]=window_1d_seconds, [6]=window_7d_seconds, [7]=window_30d_seconds
 	updateRateLimitUsageScript = redis.NewScript(`
 		local exists = redis.call('EXISTS', KEYS[1])
 		if exists == 0 then
@@ -113,6 +116,7 @@ var (
 		local win5h = tonumber(ARGV[4])
 		local win1d = tonumber(ARGV[5])
 		local win7d = tonumber(ARGV[6])
+		local win30d = tonumber(ARGV[7])
 
 		-- Helper: check if window is expired and update usage + window accordingly
 		-- Returns nothing, modifies the hash in-place.
@@ -131,6 +135,7 @@ var (
 		update_window('usage_5h', 'window_5h', win5h)
 		update_window('usage_1d', 'window_1d', win1d)
 		update_window('usage_7d', 'window_7d', win7d)
+		update_window('usage_30d', 'window_30d', win30d)
 		redis.call('EXPIRE', KEYS[1], ARGV[2])
 		return 1
 	`)
@@ -315,6 +320,9 @@ func (c *billingCache) GetAPIKeyRateLimit(ctx context.Context, keyID int64) (*se
 	if v, ok := result[rateLimitFieldUsage7d]; ok {
 		data.Usage7d, _ = strconv.ParseFloat(v, 64)
 	}
+	if v, ok := result[rateLimitFieldUsage30d]; ok {
+		data.Usage30d, _ = strconv.ParseFloat(v, 64)
+	}
 	if v, ok := result[rateLimitFieldWindow5h]; ok {
 		data.Window5h, _ = strconv.ParseInt(v, 10, 64)
 	}
@@ -323,6 +331,9 @@ func (c *billingCache) GetAPIKeyRateLimit(ctx context.Context, keyID int64) (*se
 	}
 	if v, ok := result[rateLimitFieldWindow7d]; ok {
 		data.Window7d, _ = strconv.ParseInt(v, 10, 64)
+	}
+	if v, ok := result[rateLimitFieldWindow30d]; ok {
+		data.Window30d, _ = strconv.ParseInt(v, 10, 64)
 	}
 	return data, nil
 }
@@ -333,12 +344,14 @@ func (c *billingCache) SetAPIKeyRateLimit(ctx context.Context, keyID int64, data
 	}
 	key := billingRateLimitKey(keyID)
 	fields := map[string]any{
-		rateLimitFieldUsage5h:  data.Usage5h,
-		rateLimitFieldUsage1d:  data.Usage1d,
-		rateLimitFieldUsage7d:  data.Usage7d,
-		rateLimitFieldWindow5h: data.Window5h,
-		rateLimitFieldWindow1d: data.Window1d,
-		rateLimitFieldWindow7d: data.Window7d,
+		rateLimitFieldUsage5h:   data.Usage5h,
+		rateLimitFieldUsage1d:   data.Usage1d,
+		rateLimitFieldUsage7d:   data.Usage7d,
+		rateLimitFieldUsage30d:  data.Usage30d,
+		rateLimitFieldWindow5h:  data.Window5h,
+		rateLimitFieldWindow1d:  data.Window1d,
+		rateLimitFieldWindow7d:  data.Window7d,
+		rateLimitFieldWindow30d: data.Window30d,
 	}
 	pipe := c.rdb.Pipeline()
 	pipe.HSet(ctx, key, fields)
@@ -357,6 +370,7 @@ func (c *billingCache) UpdateAPIKeyRateLimitUsage(ctx context.Context, keyID int
 		int(rateLimitWindow5h.Seconds()),
 		int(rateLimitWindow1d.Seconds()),
 		int(rateLimitWindow7d.Seconds()),
+		int(rateLimitWindow30d.Seconds()),
 	).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		log.Printf("Warning: update rate limit usage cache failed for api key %d: %v", keyID, err)

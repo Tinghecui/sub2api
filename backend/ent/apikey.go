@@ -54,18 +54,24 @@ type APIKey struct {
 	RateLimit1d float64 `json:"rate_limit_1d,omitempty"`
 	// Rate limit in USD per 7 days (0 = unlimited)
 	RateLimit7d float64 `json:"rate_limit_7d,omitempty"`
+	// Rate limit in USD per 30 days (0 = unlimited)
+	RateLimit30d float64 `json:"rate_limit_30d,omitempty"`
 	// Used amount in USD for the current 5h window
 	Usage5h float64 `json:"usage_5h,omitempty"`
 	// Used amount in USD for the current 1d window
 	Usage1d float64 `json:"usage_1d,omitempty"`
 	// Used amount in USD for the current 7d window
 	Usage7d float64 `json:"usage_7d,omitempty"`
+	// Used amount in USD for the current 30d window
+	Usage30d float64 `json:"usage_30d,omitempty"`
 	// Start time of the current 5h rate limit window
 	Window5hStart *time.Time `json:"window_5h_start,omitempty"`
 	// Start time of the current 1d rate limit window
 	Window1dStart *time.Time `json:"window_1d_start,omitempty"`
 	// Start time of the current 7d rate limit window
 	Window7dStart *time.Time `json:"window_7d_start,omitempty"`
+	// Start time of the current 30d rate limit window
+	Window30dStart *time.Time `json:"window_30d_start,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the APIKeyQuery when eager-loading is set.
 	Edges        APIKeyEdges `json:"edges"`
@@ -123,13 +129,13 @@ func (*APIKey) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case apikey.FieldIPWhitelist, apikey.FieldIPBlacklist:
 			values[i] = new([]byte)
-		case apikey.FieldQuota, apikey.FieldQuotaUsed, apikey.FieldRateLimit5h, apikey.FieldRateLimit1d, apikey.FieldRateLimit7d, apikey.FieldUsage5h, apikey.FieldUsage1d, apikey.FieldUsage7d:
+		case apikey.FieldQuota, apikey.FieldQuotaUsed, apikey.FieldRateLimit5h, apikey.FieldRateLimit1d, apikey.FieldRateLimit7d, apikey.FieldRateLimit30d, apikey.FieldUsage5h, apikey.FieldUsage1d, apikey.FieldUsage7d, apikey.FieldUsage30d:
 			values[i] = new(sql.NullFloat64)
 		case apikey.FieldID, apikey.FieldUserID, apikey.FieldGroupID:
 			values[i] = new(sql.NullInt64)
 		case apikey.FieldKey, apikey.FieldName, apikey.FieldStatus:
 			values[i] = new(sql.NullString)
-		case apikey.FieldCreatedAt, apikey.FieldUpdatedAt, apikey.FieldDeletedAt, apikey.FieldLastUsedAt, apikey.FieldExpiresAt, apikey.FieldWindow5hStart, apikey.FieldWindow1dStart, apikey.FieldWindow7dStart:
+		case apikey.FieldCreatedAt, apikey.FieldUpdatedAt, apikey.FieldDeletedAt, apikey.FieldLastUsedAt, apikey.FieldExpiresAt, apikey.FieldWindow5hStart, apikey.FieldWindow1dStart, apikey.FieldWindow7dStart, apikey.FieldWindow30dStart:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -262,6 +268,12 @@ func (_m *APIKey) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.RateLimit7d = value.Float64
 			}
+		case apikey.FieldRateLimit30d:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field rate_limit_30d", values[i])
+			} else if value.Valid {
+				_m.RateLimit30d = value.Float64
+			}
 		case apikey.FieldUsage5h:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field usage_5h", values[i])
@@ -279,6 +291,12 @@ func (_m *APIKey) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field usage_7d", values[i])
 			} else if value.Valid {
 				_m.Usage7d = value.Float64
+			}
+		case apikey.FieldUsage30d:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field usage_30d", values[i])
+			} else if value.Valid {
+				_m.Usage30d = value.Float64
 			}
 		case apikey.FieldWindow5hStart:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -300,6 +318,13 @@ func (_m *APIKey) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Window7dStart = new(time.Time)
 				*_m.Window7dStart = value.Time
+			}
+		case apikey.FieldWindow30dStart:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field window_30d_start", values[i])
+			} else if value.Valid {
+				_m.Window30dStart = new(time.Time)
+				*_m.Window30dStart = value.Time
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -411,6 +436,9 @@ func (_m *APIKey) String() string {
 	builder.WriteString("rate_limit_7d=")
 	builder.WriteString(fmt.Sprintf("%v", _m.RateLimit7d))
 	builder.WriteString(", ")
+	builder.WriteString("rate_limit_30d=")
+	builder.WriteString(fmt.Sprintf("%v", _m.RateLimit30d))
+	builder.WriteString(", ")
 	builder.WriteString("usage_5h=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Usage5h))
 	builder.WriteString(", ")
@@ -419,6 +447,9 @@ func (_m *APIKey) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("usage_7d=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Usage7d))
+	builder.WriteString(", ")
+	builder.WriteString("usage_30d=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Usage30d))
 	builder.WriteString(", ")
 	if v := _m.Window5hStart; v != nil {
 		builder.WriteString("window_5h_start=")
@@ -432,6 +463,11 @@ func (_m *APIKey) String() string {
 	builder.WriteString(", ")
 	if v := _m.Window7dStart; v != nil {
 		builder.WriteString("window_7d_start=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.Window30dStart; v != nil {
+		builder.WriteString("window_30d_start=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteByte(')')

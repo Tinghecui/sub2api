@@ -1619,6 +1619,20 @@ func (h *GatewayHandler) usageQuotaLimited(c *gin.Context, ctx context.Context, 
 				}
 				rateLimits = append(rateLimits, entry)
 			}
+			if apiKey.RateLimit30d > 0 {
+				used := rateLimitData.EffectiveUsage30d()
+				entry := gin.H{
+					"window":       "30d",
+					"limit":        apiKey.RateLimit30d,
+					"used":         used,
+					"remaining":    max(0, apiKey.RateLimit30d-used),
+					"window_start": rateLimitData.Window30dStart,
+				}
+				if rateLimitData.Window30dStart != nil && !service.IsWindowExpired(rateLimitData.Window30dStart, service.RateLimitWindow30d) {
+					entry["reset_at"] = rateLimitData.Window30dStart.Add(service.RateLimitWindow30d)
+				}
+				rateLimits = append(rateLimits, entry)
+			}
 			if len(rateLimits) > 0 {
 				resp["rate_limits"] = rateLimits
 			}
@@ -2336,6 +2350,10 @@ func billingErrorDetails(err error) (status int, code, message string, retryAfte
 		return http.StatusTooManyRequests, "rate_limit_exceeded", msg, 0
 	}
 	if errors.Is(err, service.ErrAPIKeyRateLimit7dExceeded) {
+		msg := pkgerrors.Message(err)
+		return http.StatusTooManyRequests, "rate_limit_exceeded", msg, 0
+	}
+	if errors.Is(err, service.ErrAPIKeyRateLimit30dExceeded) {
 		msg := pkgerrors.Message(err)
 		return http.StatusTooManyRequests, "rate_limit_exceeded", msg, 0
 	}

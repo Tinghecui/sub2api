@@ -89,6 +89,10 @@ func (APIKey) Fields() []ent.Field {
 			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
 			Default(0).
 			Comment("Rate limit in USD per 7 days (0 = unlimited)"),
+		field.Float("rate_limit_30d").
+			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
+			Default(0).
+			Comment("Rate limit in USD per 30 days (0 = unlimited)"),
 		// Rate limit usage tracking
 		field.Float("usage_5h").
 			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
@@ -102,6 +106,10 @@ func (APIKey) Fields() []ent.Field {
 			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
 			Default(0).
 			Comment("Used amount in USD for the current 7d window"),
+		field.Float("usage_30d").
+			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
+			Default(0).
+			Comment("Used amount in USD for the current 30d window"),
 		// Window start times
 		field.Time("window_5h_start").
 			Optional().
@@ -115,6 +123,10 @@ func (APIKey) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			Comment("Start time of the current 7d rate limit window"),
+		field.Time("window_30d_start").
+			Optional().
+			Nillable().
+			Comment("Start time of the current 30d rate limit window"),
 	}
 }
 

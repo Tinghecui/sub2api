@@ -21,6 +21,7 @@ func TestValidateAPIKeyCreateRequest(t *testing.T) {
 		{RateLimit5h: &inf},
 		{RateLimit1d: &negative},
 		{RateLimit7d: &negative},
+		{RateLimit30d: &negative},
 		{ExpiresInDays: &zeroDays},
 		{ExpiresInDays: &negativeDays},
 	} {
@@ -37,6 +38,7 @@ func TestValidateAPIKeyUpdateRequest(t *testing.T) {
 		{RateLimit5h: &nan},
 		{RateLimit1d: &inf},
 		{RateLimit7d: &negative},
+		{RateLimit30d: &nan},
 	} {
 		require.Error(t, validateAPIKeyUpdateRequest(req))
 	}

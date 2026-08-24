@@ -235,6 +235,7 @@ export default {
     rateLimit5h: '5-Hour Limit (USD)',
     rateLimit1d: 'Daily Limit (USD)',
     rateLimit7d: '7-Day Limit (USD)',
+    rateLimit30d: '30-Day Limit (USD)',
     rateLimitHint: 'Set the maximum spending for this key within each time window. 0 = unlimited.',
     rateLimitUsage: 'Rate Limit Usage',
     resetRateLimitUsage: 'Reset Rate Limit Usage',
