@@ -32,6 +32,10 @@ const (
 	updateCacheTTL = 1200 // 20 minutes
 	githubRepo     = "Wei-Shaw/sub2api"
 
+	// updateRepoEnv 覆盖检查更新所用的 GitHub 仓库。带有本地改动的部署
+	// 必须指向自己的 fork，否则一键更新会拉官方构建把改动静默覆盖掉。
+	updateRepoEnv = "UPDATE_GITHUB_REPO"
+
 	// Security: allowed download domains for updates
 	allowedDownloadHost = "github.com"
 	allowedAssetHost    = "objects.githubusercontent.com"
@@ -44,6 +48,13 @@ const (
 	// Fetch a few extra releases so filtering (current/newer/prerelease) still leaves enough candidates
 	rollbackFetchPageSize = 15
 )
+
+func updateGitHubRepo() string {
+	if v := strings.TrimSpace(os.Getenv(updateRepoEnv)); v != "" {
+		return v
+	}
+	return githubRepo
+}
 
 // UpdateCache defines cache operations for update service
 type UpdateCache interface {
@@ -363,7 +374,7 @@ func (s *UpdateService) RollbackToVersion(ctx context.Context, version string) e
 // fetchRollbackCandidates fetches recent releases and keeps the newest
 // maxRollbackVersions entries strictly older than the current version.
 func (s *UpdateService) fetchRollbackCandidates(ctx context.Context) ([]*GitHubRelease, error) {
-	releases, err := s.githubClient.FetchRecentReleases(ctx, githubRepo, rollbackFetchPageSize)
+	releases, err := s.githubClient.FetchRecentReleases(ctx, updateGitHubRepo(), rollbackFetchPageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -400,7 +411,7 @@ func (s *UpdateService) fetchRollbackCandidates(ctx context.Context) ([]*GitHubR
 }
 
 func (s *UpdateService) fetchLatestRelease(ctx context.Context) (*UpdateInfo, error) {
-	release, err := s.githubClient.FetchLatestRelease(ctx, githubRepo)
+	release, err := s.githubClient.FetchLatestRelease(ctx, updateGitHubRepo())
 	if err != nil {
 		return nil, err
 	}
